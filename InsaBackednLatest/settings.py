@@ -176,4 +176,8 @@ SYNCHRONIZABLE_MODELS = [
     "exporters.TaxPayerType",
     "exporters.Exporter",
     "tax.Tax",
+    "users.Report",
+    "users.UserStatus",
+    "users.CustomUser",
+    "users.Department",
 ]

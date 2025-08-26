@@ -10,13 +10,12 @@ class InboundChangeSerializer(serializers.Serializer):
     event_uuid = serializers.UUIDField()
     model = serializers.CharField(max_length=100)
     action = serializers.ChoiceField(choices=["C", "U", "D"])
-    object_id = serializers.UUIDField()
+
+    object_id = serializers.CharField(max_length=255)
+
     data_payload = serializers.JSONField()
 
     def validate_model(self, value):
-        """
-        Check that the model string (e.g., 'products.Product') is valid and synchronizable.
-        """
         try:
             apps.get_model(value)
         except LookupError:

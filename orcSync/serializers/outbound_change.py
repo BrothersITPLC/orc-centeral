@@ -2,6 +2,7 @@ import decimal
 import uuid
 
 from django.db import models
+from django.db.models.fields.related import ManyToManyField
 from rest_framework import serializers
 
 from orcSync.models import ChangeEvent
@@ -10,7 +11,7 @@ from orcSync.models import ChangeEvent
 class OutboundChangeSerializer(serializers.ModelSerializer):
     """
     Formats a ChangeEvent record to be sent down to a workstation.
-    This version is compatible with older Django versions.
+    This version is compatible with older Django versions and correctly skips ManyToManyFields.
     """
 
     model = serializers.SerializerMethodField()
@@ -21,29 +22,26 @@ class OutboundChangeSerializer(serializers.ModelSerializer):
         fields = ("id", "model", "action", "object_id", "data_payload", "timestamp")
 
     def get_model(self, obj):
-        """
-        Manually constructs the 'app_label.ModelName' string.
-        obj is the ChangeEvent instance.
-        """
         model_class = obj.content_type.model_class()
         if not model_class:
             return f"{obj.content_type.app_label}.{obj.content_type.model.capitalize()}"
         return f"{obj.content_type.app_label}.{model_class.__name__}"
 
     def get_data_payload(self, obj):
-        """
-        Re-serializes the changed object to include full URLs for file fields.
-        If the object was deleted, it returns the original payload.
-        """
         if obj.action == "D" or not obj.changed_object:
             return obj.data_payload
 
         instance = obj.changed_object
         payload = {}
-
         for field in instance._meta.get_fields():
             if isinstance(
-                field, (models.ManyToOneRel, models.ManyToManyRel, models.OneToOneRel)
+                field,
+                (
+                    models.ManyToOneRel,
+                    models.ManyToManyRel,
+                    models.OneToOneRel,
+                    ManyToManyField,
+                ),
             ):
                 continue
 
@@ -66,5 +64,4 @@ class OutboundChangeSerializer(serializers.ModelSerializer):
                     payload[field.name] = value.isoformat()
                 else:
                     payload[field.name] = value
-
         return payload

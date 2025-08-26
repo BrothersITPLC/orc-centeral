@@ -1,15 +1,14 @@
 import base64
-import decimal
-import uuid
 
 from django.db import models
+from django.db.models.fields.related import ManyToManyField
 from rest_framework import serializers
 
 
 class CentralGenericModelSerializer(serializers.ModelSerializer):
     """
     A dynamic serializer for the central server to capture its own changes.
-    It's nearly identical to the workstation's serializer.
+    Correctly handles special types and now skips ManyToManyFields.
     """
 
     def to_representation(self, instance):
@@ -17,9 +16,16 @@ class CentralGenericModelSerializer(serializers.ModelSerializer):
         fields = instance._meta.get_fields()
         for field in fields:
             if isinstance(
-                field, (models.ManyToOneRel, models.ManyToManyRel, models.OneToOneRel)
+                field,
+                (
+                    models.ManyToOneRel,
+                    models.ManyToManyRel,
+                    models.OneToOneRel,
+                    ManyToManyField,
+                ),
             ):
                 continue
+
             value = getattr(instance, field.name)
             if value is None:
                 ret[field.name] = None
@@ -49,9 +55,6 @@ class CentralGenericModelSerializer(serializers.ModelSerializer):
             else:
                 ret[field.name] = value
         return ret
-
-    class Meta:
-        pass
 
     class Meta:
         pass

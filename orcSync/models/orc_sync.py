@@ -30,29 +30,61 @@ class StationCredential(models.Model):
         return f"Sync Credentials for {self.location}"
 
 
-class ChangeEvent(models.Model):
-    """
-    Logs every single Create, Update, or Delete operation processed by the server.
-    This is the immutable, single source of truth for the system's history.
-    """
+# class ChangeEvent(models.Model):
+#     """
+#     Logs every single Create, Update, or Delete operation processed by the server.
+#     This is the immutable, single source of truth for the system's history.
+#     """
 
+#     class Action(models.TextChoices):
+#         CREATED = "C", "Created"
+#         UPDATED = "U", "Updated"
+#         DELETED = "D", "Deleted"
+
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+#     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+#     object_id = models.UUIDField()
+#     changed_object = GenericForeignKey("content_type", "object_id")
+
+#     action = models.CharField(max_length=1, choices=Action.choices)
+#     timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+#     data_payload = models.JSONField(
+#         help_text="A JSON snapshot of the model's data at the time of the change."
+#     )
+
+#     source_workstation = models.ForeignKey(
+#         WorkStation,
+#         on_delete=models.SET_NULL,
+#         null=True,
+#         blank=True,
+#         related_name="initiated_changes",
+#     )
+
+#     class Meta:
+#         ordering = ["timestamp"]
+
+#     def __str__(self):
+#         return f"{self.get_action_display()} on {self.content_type.model} at {self.timestamp}"
+
+
+class ChangeEvent(models.Model):
     class Action(models.TextChoices):
         CREATED = "C", "Created"
         UPDATED = "U", "Updated"
         DELETED = "D", "Deleted"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.UUIDField()
-    changed_object = GenericForeignKey("content_type", "object_id")
 
+    object_id = models.CharField(max_length=255)
+
+    changed_object = GenericForeignKey("content_type", "object_id")
     action = models.CharField(max_length=1, choices=Action.choices)
     timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
     data_payload = models.JSONField(
         help_text="A JSON snapshot of the model's data at the time of the change."
     )
-
     source_workstation = models.ForeignKey(
         WorkStation,
         on_delete=models.SET_NULL,
