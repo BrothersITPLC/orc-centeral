@@ -22,7 +22,7 @@ def tax_rate_analysis(request):
         )
 
     if not checkins.exists():
-        return Response([])  # Return empty list if no checkins found
+        return Response([])
 
     # Get min and max weight
     weights = checkins.values_list("net_weight", flat=True)
@@ -34,7 +34,7 @@ def tax_rate_analysis(request):
     ranges = []
     for i in range(5):
         start = min_weight + (i * step)
-        end = start + step if i < 4 else None  # Last range is open-ended
+        end = start + step if i < 4 else None
         ranges.append({"min": start, "max": end})
 
     # Initialize result and total revenue

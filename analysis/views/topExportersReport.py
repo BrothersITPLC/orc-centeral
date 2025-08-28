@@ -181,6 +181,4 @@ def top_exporters_report(request):
                 }
             )
 
-    # Prepare the report data
-
     return Response(report_data)
