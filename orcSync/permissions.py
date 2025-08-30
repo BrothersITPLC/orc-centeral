@@ -13,6 +13,7 @@ class WorkstationHasAPIKey(BasePermission):
 
     def has_permission(self, request, view):
         header = request.META.get("HTTP_AUTHORIZATION")
+        print(header, " it is header")
         if not header or not header.lower().startswith("api-key "):
             return False
 
