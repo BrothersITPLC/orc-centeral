@@ -4,11 +4,12 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
 
+from base.models import BaseModel
 from users.models import CustomUser
 
 
 # Create your models here.
-class WorkStation(models.Model):
+class WorkStation(BaseModel):
     name = models.CharField(max_length=400, unique=True)
     machine_number = models.CharField(max_length=400, unique=True)
 
@@ -29,7 +30,7 @@ class WorkStation(models.Model):
         return self.name
 
 
-class WorkedAt(models.Model):
+class WorkedAt(BaseModel):
     station = models.ForeignKey(WorkStation, on_delete=models.RESTRICT)
     employee = models.ForeignKey(CustomUser, on_delete=models.RESTRICT)
     created_at = models.DateTimeField(auto_now_add=True)

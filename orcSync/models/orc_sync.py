@@ -4,10 +4,11 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
+from base.models import BaseModel
 from workstations.models import WorkStation
 
 
-class StationCredential(models.Model):
+class StationCredential(BaseModel):
     """
     Stores the connection details and API key for each remote workstation.
     This links a known WorkStation to its network address and secret key.
