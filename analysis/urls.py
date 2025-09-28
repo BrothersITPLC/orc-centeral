@@ -1,6 +1,60 @@
 from django.urls import path
 
-from .views.adminCombinedTaxpayerReport import admin_combined_taxpayer_report
+############################-shared-###############################
+from analysis.views.shared import (
+    daily_hourly_monthly_revenue_breakdown,
+    dynamic_model_report,
+    monthly_revenue_report,
+    overall_revenue_and_taxpayer_summary,
+    top_exporters_report,
+    top_trucks_report,
+    yearly_revenue_report,
+)
+
+############################-shared-cashier-controller-###############################
+from analysis.views.shared_cashier_controller import (
+    cashier_combined_revenue_trends_report,
+    cashier_daily_summary_report,
+    cashier_drivers_degistered_trends_report,
+    cashier_incremental_weight_trends,
+    cashier_revenue_trends_report,
+    cashier_taxpayers_registered_report,
+    controller_daily_summary_report,
+    controller_drivers_registered_report,
+    controller_incremental_weight_trends,
+    controller_revenue_trends_report,
+    controller_taxpayers_registered_report,
+    controller_total_revenue_trends_report,
+)
+
+############################-shared-officials-system-admin-###############################
+from analysis.views.shared_officials_system_admin import (
+    admin_combined_taxpayer_report,
+    admin_each_station_regular_total_revenue_report,
+    admin_each_station_revenue_today_report,
+    admin_each_station_revenue_trends_report,
+    admin_each_station_total_revenue_report,
+    admin_each_station_total_weight_report,
+    admin_each_station_walkin_total_revenue_report,
+    admin_registered_drivers_each_station_report,
+    admin_registered_exporters_each_station_by_date_type,
+    admin_revenue_and_issues_report,
+    admin_station_ontroller_revenue_report,
+    admin_station_taxpayer_revenue_report,
+    admin_top_regular_taxpayer_report,
+    admin_top_trucks_report,
+    admin_top_walkin_taxpayer_report,
+    employee_revenue_report,
+    revenue_breakdown_report,
+    revenue_trends_report,
+    station_revenue_report,
+    stats_overview,
+    tax_payer_revenue_trends,
+    tax_rate_analysis,
+    weekly_revenue_report,
+    workstation_revenue_report,
+)
+
 from .views.adminEachStationRegularRevenueByDateType import (
     admin_each_station_regular_revenue_by_date_type,
 )
@@ -22,16 +76,10 @@ from .views.adminEachStationWeightByDateType import (
 from .views.adminRegisteredDriverEachStationByDateType import (
     admin_registered_driver_each_station_by_date_type,
 )
-from .views.adminRegisteredExportersEachStationByDateType import (
-    admin_registered_exporters_each_station_by_date_type,
-)
 from .views.adminRevenueAndIssues import admin_revenue_and_issues
 from .views.adminRevenueByStationAndController import (
     admin_revenue_by_station_and_controller,
 )
-from .views.adminTopRegularTaxPayerReport import admin_top_regular_taxpayer_report
-from .views.adminTopTrucksReport import admin_top_trucks_report
-from .views.adminTopWalkinTaxPayersReport import admin_top_walkin_taxpayer_report
 from .views.byStationAndByTaxPayerType import stationTaxpayer_revenue_report
 from .views.cashierCombinedRevenueByDateType import (
     cashier_combined_revenue_by_date_type,
@@ -60,27 +108,11 @@ from .views.controllerWeightByDateType import controller_weight_by_date_type
 
 ################################################################
 from .views.dailyDashbord import daily_revenue_report, revenue_and_number
-from .views.driverView import model_report
-from .views.employeeRevenueReport import employee_revenue_report
-from .views.monthlyDashbord import monthly_revenue_report
-from .views.newRevenueTrends import revenue_trends_report
-from .views.revenueBreakdown import revenue_breakdown_report
 from .views.revenueReport import revenue_report
 from .views.stationRevenue import station_revenue_report
-from .views.statsOverview import stats_overview
-from .views.taxPayerRevenueTrends import tax_payer_revenue_trends
-from .views.taxRateAnalysis import tax_rate_analysis
-from .views.topExportersReport import top_exporters_report
-from .views.topTrucksReport import top_trucks_report
-from .views.weekly_trends import weekly_revenue_report
-from .views.workstationRevenueReport import workstation_revenue_report
-from .views.yearlyDashbord import yearly_revenue_report
-
-################################################################
-
 
 urlpatterns = [
-    path("report/<str:model_name>/", model_report, name="model_report"),
+    path("report/<str:model_name>/", dynamic_model_report, name="dynamic_model_report"),
     path("revenue-report/", revenue_report, name="revenue_report"),
     path("yearly_revenue_report/", yearly_revenue_report, name="yearly_revenue_report"),
     path(

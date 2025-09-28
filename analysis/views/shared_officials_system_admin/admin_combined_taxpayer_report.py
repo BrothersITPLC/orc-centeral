@@ -7,7 +7,10 @@ from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
-from analysis.views.helpers import annotate_revenue_on_checkins, validate_date_range
+from analysis.views.helpers import (
+    annotate_revenue_on_checkins,
+    parse_and_validate_date_range,
+)
 from declaracions.models import Checkin
 
 
@@ -21,7 +24,9 @@ def admin_combined_taxpayer_report(request):
     if not selected_date_type or not start_date or not end_date:
         return Response({"error": "Missing required parameters."}, status=400)
 
-    validation_response = validate_date_range(start_date, end_date, selected_date_type)
+    validation_response = parse_and_validate_date_range(
+        start_date, end_date, selected_date_type
+    )
     if validation_response:
         return validation_response
 

@@ -1,5 +1,3 @@
-# In a utility file like `utils/validators.py`
-
 from calendar import monthrange
 from datetime import datetime, timedelta
 

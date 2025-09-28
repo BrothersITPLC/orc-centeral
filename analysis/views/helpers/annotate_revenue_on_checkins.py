@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.db.models import Case, DecimalField, F, Value, When, Window
-from django.db.models.functions import LAG
+from django.db.models.functions import Lag
 
 
 def annotate_revenue_on_checkins(checkins_queryset):
@@ -16,7 +16,7 @@ def annotate_revenue_on_checkins(checkins_queryset):
     """
 
     window = Window(
-        expression=LAG("net_weight", default=Decimal(0)),
+        expression=Lag("net_weight", default=Decimal(0)),
         partition_by=[F("localJourney_id"), F("declaracion_id")],
         order_by=F("checkin_time").asc(),
     )

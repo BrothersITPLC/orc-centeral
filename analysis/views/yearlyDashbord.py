@@ -50,7 +50,3 @@ def yearly_revenue_report(request):
     response_data = {"labels": labels, "data": data}
 
     return Response(response_data)
-
-    response_data = {"labels": labels, "data": data}
-
-    return Response(response_data)
