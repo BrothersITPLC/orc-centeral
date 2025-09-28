@@ -1,8 +1,10 @@
 from django.db import models
 
+from base.models import BaseModel
+
 
 # Create your models here.
-class RegionOrCity(models.Model):
+class RegionOrCity(BaseModel):
     """
     Represents a region or city entity.
 
@@ -14,8 +16,7 @@ class RegionOrCity(models.Model):
     """
 
     name = models.CharField(max_length=100, unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+
     created_by = models.ForeignKey(
         "users.CustomUser", on_delete=models.RESTRICT, null=True
     )
@@ -25,7 +26,7 @@ class RegionOrCity(models.Model):
             return self.name
 
 
-class ZoneOrSubcity(models.Model):
+class ZoneOrSubcity(BaseModel):
     """
     Represents a zone or sub-city entity within a region or city.
 
@@ -41,8 +42,7 @@ class ZoneOrSubcity(models.Model):
     region = models.ForeignKey(
         RegionOrCity, on_delete=models.CASCADE, related_name="zones"
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+
     created_by = models.ForeignKey(
         "users.CustomUser", on_delete=models.RESTRICT, null=True
     )
@@ -52,7 +52,7 @@ class ZoneOrSubcity(models.Model):
             return self.name
 
 
-class Woreda(models.Model):
+class Woreda(BaseModel):
     """
     Represents a woreda entity within a zone or sub-city.
 
@@ -68,8 +68,7 @@ class Woreda(models.Model):
     zone = models.ForeignKey(
         ZoneOrSubcity, on_delete=models.RESTRICT, related_name="woredas"
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+
     created_by = models.ForeignKey(
         "users.CustomUser", on_delete=models.RESTRICT, null=True, related_name="woredas"
     )
