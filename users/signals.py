@@ -49,8 +49,6 @@ from django.conf import (  # Import settings to get AUTH_USER_MODEL if needed, t
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
-from orcSync.models import ZoimeUserSyncStatus
-
 from .models import CustomUser
 
 
@@ -87,15 +85,3 @@ def sync_role_with_group(sender, instance, **kwargs):
     instance.groups.clear()
     if instance.role:
         instance.groups.add(instance.role)
-
-
-@receiver(post_save, sender=CustomUser)
-def create_zoime_sync_status_on_create(sender, instance, created, **kwargs):
-    """
-    Creates a ZoimeUserSyncStatus entry only when a CustomUser is first created.
-    """
-    if created:
-        ZoimeUserSyncStatus.objects.get_or_create(user=instance)
-        print(
-            f"ZOIME_SYNC: Created ZoimeUserSyncStatus for new user {instance.username}"
-        )
