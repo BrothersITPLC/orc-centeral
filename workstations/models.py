@@ -17,8 +17,6 @@ class WorkStation(BaseModel):
         "address.Woreda", on_delete=models.RESTRICT, related_name="workstations"
     )
     kebele = models.CharField(max_length=200)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     managed_by = models.ForeignKey(
         "users.CustomUser",
         on_delete=models.RESTRICT,
@@ -33,8 +31,6 @@ class WorkStation(BaseModel):
 class WorkedAt(BaseModel):
     station = models.ForeignKey(WorkStation, on_delete=models.RESTRICT)
     employee = models.ForeignKey(CustomUser, on_delete=models.RESTRICT)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     leave_time = models.DateTimeField(null=True)
     assigner = models.ForeignKey(
         CustomUser,

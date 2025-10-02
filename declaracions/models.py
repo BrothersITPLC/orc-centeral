@@ -69,7 +69,7 @@ class Declaracion(BaseModel):
 
 
 class PaymentMethod(BaseModel):
-    name = models.CharField(max_length=400, unique=True, primary_key=True)
+    name = models.CharField(max_length=400, unique=True)
 
     def __str__(self):
         return self.name
@@ -114,7 +114,6 @@ class Checkin(BaseModel):
     employee = models.ForeignKey(
         "users.CustomUser", on_delete=models.PROTECT, related_name="checkins", null=True
     )
-    updated_at = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=100, choices=STATUS_CHOICES, default="unpaid")
     transaction_key = models.CharField(max_length=1000, null=True)
     payment_method = models.ForeignKey(

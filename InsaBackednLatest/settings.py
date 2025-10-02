@@ -173,6 +173,21 @@ STATICFILES_DIRS = [
 ]
 
 
+# SYNCHRONIZABLE_MODELS = [
+#     "drivers.Driver",
+#     "workstations.WorkStation",
+#     "workstations.WorkedAt",
+#     "trucks.TruckOwner",
+#     "trucks.Truck",
+#     "exporters.TaxPayerType",
+#     "exporters.Exporter",
+#     "tax.Tax",
+#     "users.Report",
+#     "users.UserStatus",
+#     "users.CustomUser",
+#     "users.Department",
+# ]
+
 SYNCHRONIZABLE_MODELS = [
     "drivers.Driver",
     "workstations.WorkStation",
@@ -186,4 +201,11 @@ SYNCHRONIZABLE_MODELS = [
     "users.UserStatus",
     "users.CustomUser",
     "users.Department",
+    "address.RegionOrCity",
+    "address.ZoneOrSubcity",
+    "address.Woreda",
+    "declaracions.Commodity",
+    "declaracions.PaymentMethod",
+    "declaracions.ManualPayment",
+    "auth.Group",
 ]

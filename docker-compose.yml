@@ -13,14 +13,16 @@ services:
     restart: always
   django_server:
     build: .
-    command: python3 manage.py runserver 0.0.0.0:8000
+    command: ./entrypoint.sh
     env_file:
       - .env
     volumes:
       - .:/app
       - ./media:/app/media
+      - ./staticfiles:/app/staticfiles
+      - ./static:/app/static
     ports:
-      - "8010:8000"
+      - "8000:8000"
     depends_on:
       - insadb
     networks:

@@ -104,13 +104,6 @@ class Truck(BaseModel):
         help_text=_("Image of the truck_plate"),
     )
 
-    created_at = models.DateTimeField(
-        auto_now_add=True, help_text=_("Timestamp when the record was created")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, help_text=_("Timestamp when the record was last updated")
-    )
-
     def __str__(self):
         return self.plate_number
 

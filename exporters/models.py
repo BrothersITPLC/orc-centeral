@@ -19,9 +19,6 @@ def generate_time_based_hash_id(user_id):
 class TaxPayerType(BaseModel):
     name = models.CharField(max_length=400, unique=True)
     description = models.CharField(max_length=1000, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(
         "users.CustomUser",
         on_delete=models.PROTECT,
@@ -75,8 +72,6 @@ class Exporter(BaseModel):
         max_length=400, unique=True, blank=True, null=True
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     register_by = models.ForeignKey(
         "users.CustomUser",
         on_delete=models.PROTECT,
