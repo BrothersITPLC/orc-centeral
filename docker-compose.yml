@@ -5,7 +5,7 @@ services:
     env_file:
       - .env
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - central_postgres_data:/var/lib/postgresql/data
     networks:
@@ -13,12 +13,14 @@ services:
     restart: always
   django_server:
     build: .
-    command: python3 manage.py runserver 0.0.0.0:8000
+    command: ./entrypoint.sh
     env_file:
       - .env
     volumes:
       - .:/app
       - ./media:/app/media
+      - ./staticfiles:/app/staticfiles
+      - ./static:/app/static
     ports:
       - "8000:8000"
     depends_on:

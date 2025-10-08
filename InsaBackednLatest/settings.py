@@ -27,6 +27,12 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
+ALLOWED_HOSTS.append("localhost")
+ALLOWED_HOSTS.append("127.0.0.1")
+ALLOWED_HOSTS.append("0.0.0.0")
+ALLOWED_HOSTS.append("localhost:8010")
+ALLOWED_HOSTS.append("192.168.10.42")
+ALLOWED_HOSTS.append("host.docker.internal")
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -167,6 +173,21 @@ STATICFILES_DIRS = [
 ]
 
 
+# SYNCHRONIZABLE_MODELS = [
+#     "drivers.Driver",
+#     "workstations.WorkStation",
+#     "workstations.WorkedAt",
+#     "trucks.TruckOwner",
+#     "trucks.Truck",
+#     "exporters.TaxPayerType",
+#     "exporters.Exporter",
+#     "tax.Tax",
+#     "users.Report",
+#     "users.UserStatus",
+#     "users.CustomUser",
+#     "users.Department",
+# ]
+
 SYNCHRONIZABLE_MODELS = [
     "drivers.Driver",
     "workstations.WorkStation",
@@ -180,4 +201,14 @@ SYNCHRONIZABLE_MODELS = [
     "users.UserStatus",
     "users.CustomUser",
     "users.Department",
+    "address.RegionOrCity",
+    "address.ZoneOrSubcity",
+    "address.Woreda",
+    "declaracions.Commodity",
+    "declaracions.PaymentMethod",
+    "declaracions.ManualPayment",
+    "auth.Group",
 ]
+
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

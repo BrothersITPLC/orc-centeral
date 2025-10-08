@@ -96,7 +96,6 @@ urlpatterns = [
     path("api/users/", include("users.urls")),
     path("api/", include("trucks.urls")),
     path("api/", include("workstations.urls")),
-    # path('api/', include('departments.urls')),
     path("api/", include("drivers.urls")),
     path("api/", include("declaracions.urls")),
     path("api/", include("exporters.urls")),

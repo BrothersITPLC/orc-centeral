@@ -4,6 +4,8 @@ import time
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from base.models import BaseModel
+
 
 def generate_time_based_hash_id(user_id):
     timestamp = str(time.time())
@@ -14,12 +16,9 @@ def generate_time_based_hash_id(user_id):
     return unique_id
 
 
-class TaxPayerType(models.Model):
+class TaxPayerType(BaseModel):
     name = models.CharField(max_length=400, unique=True)
     description = models.CharField(max_length=1000, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(
         "users.CustomUser",
         on_delete=models.PROTECT,
@@ -31,7 +30,7 @@ class TaxPayerType(models.Model):
         return self.name
 
 
-class Exporter(models.Model):
+class Exporter(BaseModel):
     GENDER_CHOICES = [
         ("Female", "Female"),
         ("Male", "Male"),
@@ -73,8 +72,6 @@ class Exporter(models.Model):
         max_length=400, unique=True, blank=True, null=True
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     register_by = models.ForeignKey(
         "users.CustomUser",
         on_delete=models.PROTECT,

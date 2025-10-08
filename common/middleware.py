@@ -1,4 +1,4 @@
-# your_app/middleware.py
+import os
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -7,7 +7,7 @@ import pytz
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
-from django.urls import resolve
+from django.urls import Resolver404, resolve
 from django.utils.deprecation import MiddlewareMixin
 from rest_framework import status
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -23,19 +23,14 @@ User = get_user_model()
 
 def get_user_from_token(token):
     try:
-        # Decode the token
         access_token = AccessToken(token)
-        # Extract the user ID from the token payload
         user_id = access_token["user_id"]
-        # print(user_id, "user ID is HERE")
-        # Retrieve the user from the database
         user = User.objects.get(id=user_id)
         set_current_user(user)
         return user
     except User.DoesNotExist:
         return None
-    except Exception as e:
-        # print(e)
+    except Exception:
         return None
 
 
@@ -44,9 +39,17 @@ class AttachJWTTokenMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        if (
+            request.path.startswith(settings.STATIC_URL)
+            or request.path.startswith(settings.MEDIA_URL)
+            or request.path.startswith("/admin/")
+        ):
+            return self.get_response(request)
 
-        url_name = resolve(path=request.path).url_name
-
+        try:
+            url_name = resolve(path=request.path).url_name
+        except Resolver404:
+            url_name = None
         if (
             url_name
             in [
@@ -140,6 +143,8 @@ class AttachJWTTokenMiddleware:
                 "station-tax-payer",
                 "completed_declaracion-list",
                 "completed_declaracion-detail",
+                "zoime-sync-user-list",
+                "zoime-sync-user-trigger",
             ]
             and request.path != "/admin/login/"
         ):
@@ -149,7 +154,6 @@ class AttachJWTTokenMiddleware:
                 request.META["HTTP_AUTHORIZATION"] = f"Bearer {token}"
             if csrf_token:
                 request.META["HTTP_X_CSRFTOKEN"] = csrf_token
-                # print(csrf_token)
 
         response = self.get_response(request)
         return response
@@ -160,70 +164,88 @@ class RefreshTokenMiddleware:
         self.get_response = get_response
 
     def check_user_status(self, user):
-
         if user is not None:
-            # print("always here", user)
             set_current_user(user)
             if user.get_latest_status() is not None:
                 if user.get_latest_status() == "Inactive":
-
                     return JsonResponse(
-                        {"error": "Your Account is  InActive please Contact the Admin"},
+                        {"error": "Your Account is InActive please Contact the Admin"},
                         status=status.HTTP_401_UNAUTHORIZED,
                     )
         return None
 
     def __call__(self, request):
-        # Define paths that do not require token validation
         exempt_paths = [
-            "/admin/login/",
             "/admin/",
+            "/admin/login/",
             "/user/register/",
             "/user/login",
             "/user/signup",
             "/user/logout",
+            "/sync/get-pending/",
+            "/sync/push/",
+            "/sync/acknowledge/",
+            "/users/register/",
+            "/users/login",
+            "/users/signup",
+            "/users/logout",
             "/api/sync/get-pending/",
             "/api/sync/push/",
             "/api/sync/acknowledge/",
+            "/api/users/register/",
+            "/api/users/login",
+            "/api/users/signup",
+            "/api/users/logout",
+            settings.STATIC_URL,
+            settings.MEDIA_URL,
         ]
-        # print(resolve(path=request.path).url_name)
-        if any(request.path.startswith(path) for path in exempt_paths) or resolve(
-            path=request.path
-        ).url_name in [
-            "login",
-            "verify-email",
-            "signup",
-            "forget",
-            "truck-list",
-            "check-truck",
-            "weighbridgerecord-list",
-            "password_reset_confirm",
-            "check-logic",
-            "logout",
-            "schema-json",
-            "schema-swagger-ui",
-            "user-api-detail",
-            "user-api-list",
-            "trucks-list",
-            "without_truck_checkin",
-            "trucks-detail",
-            "revenue_trends_report",
-            "station-revenue-report",
-            "stats-overview",
-            "tax-rate-analysis",
-            "employee-revenue-report",
-            "tax-payer-revenue-trends",
-            "deleteTax",
-            "controller-today-report",
-            "controller-revenue-by-date-type",
-            "controller-combined-revenue-by-date-type",
-        ]:
+
+        path_is_exempt = any(
+            request.path.startswith(path) for path in exempt_paths if path
+        )
+
+        url_name_is_exempt = False
+        resolved_url_name = None
+        try:
+            resolved_url_name = resolve(path=request.path).url_name
+            if resolved_url_name in [
+                "login",
+                "verify-email",
+                "signup",
+                "forget",
+                "truck-list",
+                "check-truck",
+                "weighbridgerecord-list",
+                "password_reset_confirm",
+                "check-logic",
+                "logout",
+                "schema-json",
+                "schema-swagger-ui",
+                "user-api-detail",
+                "user-api-list",
+                "trucks-list",
+                "without_truck_checkin",
+                "trucks-detail",
+                "revenue_trends_report",
+                "station-revenue-report",
+                "stats-overview",
+                "tax-rate-analysis",
+                "employee-revenue-report",
+                "tax-payer-revenue-trends",
+                "deleteTax",
+                "controller-today-report",
+                "controller-revenue-by-date-type",
+                "controller-combined-revenue-by-date-type",
+            ]:
+                url_name_is_exempt = True
+        except Resolver404:
+            pass
+
+        if path_is_exempt or url_name_is_exempt:
             set_current_user(None)
-
             return self.get_response(request)
-        # print(resolve(path=request.path).url_name, "after")
-        token = request.COOKIES.get("access")
 
+        token = request.COOKIES.get("access")
         refresh_token = request.COOKIES.get("refresh")
 
         if not token:
@@ -233,71 +255,31 @@ class RefreshTokenMiddleware:
             )
         if not refresh_token:
             return JsonResponse(
-                {"error": "No  token provided"},
+                {"error": "No refresh token provided"},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        if token and refresh_token:
-            try:
-                # Decode the access token
-                payload = jwt.decode(
-                    token,
-                    settings.SIMPLE_JWT["SIGNING_KEY"],
-                    algorithms=[api_settings.ALGORITHM],
-                )
-                exp = payload["exp"]
+        response = self.get_response(request)
 
-                # If the token is expired, attempt to refresh it
-                if datetime.fromtimestamp(exp, timezone.utc) < datetime.now(
-                    timezone.utc
-                ):
+        try:
+            payload = jwt.decode(
+                token,
+                settings.SIMPLE_JWT["SIGNING_KEY"],
+                algorithms=[api_settings.ALGORITHM],
+            )
+            exp = payload["exp"]
 
-                    try:
-                        refresh = RefreshToken(refresh_token)
-                        access_token = str(refresh.access_token)
-                        request.META["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
-
-                        user = get_user_from_token(access_token)
-
-                        status_response = self.check_user_status(user)
-                        if status_response:
-                            return status_response
-
-                        # Set the new access token in the cookies
-                        response = response = self.get_response(request)
-                        response.set_cookie(
-                            "access",
-                            access_token,
-                            httponly=True,
-                            secure=True,
-                            samesite="Strict",
-                            expires=datetime.now() + timedelta(days=1),
-                        )
-                        return response
-
-                    except TokenError:
-                        # Refresh token is invalid, clear cookies and log user out
-                        response = JsonResponse(
-                            {"error": "Invalid refresh token"},
-                            status=status.HTTP_401_UNAUTHORIZED,
-                        )
-                        response.delete_cookie("access")
-                        response.delete_cookie("refresh")
-                        return response
-            except jwt.ExpiredSignatureError:
-
+            if datetime.fromtimestamp(exp, timezone.utc) < datetime.now(timezone.utc):
                 try:
-
                     refresh = RefreshToken(refresh_token)
                     access_token = str(refresh.access_token)
                     request.META["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
-                    user = get_user_from_token(access_token)
 
+                    user = get_user_from_token(access_token)
                     status_response = self.check_user_status(user)
                     if status_response:
                         return status_response
-                    # Set the new access token in the cookies
-                    response = response = self.get_response(request)
+
                     response.set_cookie(
                         "access",
                         access_token,
@@ -306,51 +288,74 @@ class RefreshTokenMiddleware:
                         samesite="Strict",
                         expires=datetime.now() + timedelta(days=1),
                     )
-
                     return response
 
                 except TokenError:
-                    # Refresh token is invalid, clear cookies and log user out
-                    response = JsonResponse(
+                    new_response = JsonResponse(
                         {"error": "Invalid refresh token"},
                         status=status.HTTP_401_UNAUTHORIZED,
                     )
-                    response.delete_cookie("access")
-                    response.delete_cookie("refresh")
-                    return response
-            # Access token has expired, attempt to refresh it
+                    new_response.delete_cookie("access")
+                    new_response.delete_cookie("refresh")
+                    return new_response
+        except jwt.ExpiredSignatureError:
+            try:
+                refresh = RefreshToken(refresh_token)
+                access_token = str(refresh.access_token)
+                request.META["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
 
-            except jwt.InvalidTokenError:
+                user = get_user_from_token(access_token)
+                status_response = self.check_user_status(user)
+                if status_response:
+                    return status_response
 
-                # Invalid token, clear cookies and log user out
-                response = JsonResponse(
-                    {"error": "Invalid token"}, status=status.HTTP_401_UNAUTHORIZED
+                response.set_cookie(
+                    "access",
+                    access_token,
+                    httponly=True,
+                    secure=True,
+                    samesite="Strict",
+                    expires=datetime.now() + timedelta(days=1),
                 )
-                response.delete_cookie("access")
-                response.delete_cookie("refresh")
-
                 return response
 
-        return self.get_response(request)
+            except TokenError:
+                new_response = JsonResponse(
+                    {"error": "Invalid refresh token"},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+                new_response.delete_cookie("access")
+                new_response.delete_cookie("refresh")
+                return new_response
+        except jwt.InvalidTokenError:
+            new_response = JsonResponse(
+                {"error": "Invalid token"}, status=status.HTTP_401_UNAUTHORIZED
+            )
+            new_response.delete_cookie("access")
+            new_response.delete_cookie("refresh")
+            return new_response
+
+        return response
 
 
 class DisplayCurrentUserMiddleware(MiddlewareMixin):
     def process_request(self, request):
-        # Manually authenticate the user if JWT token is provided
-        jwt_authenticator = JWTAuthentication()
+        if (
+            request.path.startswith(settings.STATIC_URL)
+            or request.path.startswith(settings.MEDIA_URL)
+            or request.path.startswith("/admin/")
+        ):
+            set_current_user(None)
+            return None
 
+        jwt_authenticator = JWTAuthentication()
         try:
             user, token = jwt_authenticator.authenticate(request)
-
             if user:
                 request.user = user
                 set_current_user(user)
-                # print(f"Currently logged-in user: {request.user.username}")
             else:
-                print("")
-                # print("No user is logged in.")
-        except Exception as e:
-            print("")
-            # print(f"JWT Authentication failed: {str(e)}")
-
+                set_current_user(None)
+        except Exception:
+            set_current_user(None)
         return None

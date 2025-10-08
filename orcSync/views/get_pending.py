@@ -15,7 +15,7 @@ class GetPendingChangesView(APIView):
     which of its previously sent changes have been fully processed.
     """
 
-    permission_classes = [HasAPIKey, WorkstationHasAPIKey]
+    permission_classes = [WorkstationHasAPIKey]
 
     def get(self, request, *args, **kwargs):
         workstation = request._request.workstation
