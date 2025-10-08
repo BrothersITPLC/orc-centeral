@@ -142,6 +142,15 @@ class CustomUser(BaseModel, AbstractUser):
         blank=True,
     )
 
+    def get_latest_status(self):
+        """
+        Returns the most recent status for this user.
+        """
+        latest_status = (
+            UserStatus.objects.filter(user=self).order_by("-created_at").first()
+        )
+        return latest_status.status if latest_status else None
+
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.username})"
 

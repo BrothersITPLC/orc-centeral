@@ -5,6 +5,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     gcc \
+    cron \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -15,8 +17,8 @@ COPY . /app/
 RUN chmod +x /app/entrypoint.sh
 
 ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1  
+ENV PYTHONDONTWRITEBYTECODE=1
 
 EXPOSE 8000
 
-CMD ["./entrypoint.sh"]
+CMD ["sh", "/app/entrypoint.sh"]

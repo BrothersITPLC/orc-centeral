@@ -18,7 +18,7 @@ from workstations.models import WorkStation
 
 
 @api_view(["GET"])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def admin_station_taxpayer_revenue_report(request):
     """
     Generates a detailed revenue report for each workstation, breaking down

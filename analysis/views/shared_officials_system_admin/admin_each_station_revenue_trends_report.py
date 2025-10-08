@@ -204,4 +204,3 @@ def admin_each_station_revenue_trends_report(request):
         series.append({"name": station_name, "data": data_for_station})
 
     return Response({"series": series, "categories": categories})
-    return Response({"series": series, "categories": categories})

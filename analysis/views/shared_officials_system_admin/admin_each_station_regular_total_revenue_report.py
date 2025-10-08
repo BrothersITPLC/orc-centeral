@@ -131,4 +131,3 @@ def admin_each_station_regular_total_revenue_report(request):
     ]
 
     return Response({"data": data_list, "labels": labels})
-    return Response({"data": data_list, "labels": labels})

@@ -238,5 +238,3 @@ def cashier_revenue_trends_report(request):
     ]
 
     return Response({"series": series, "categories": categories})
-
-    return Response({"series": series, "categories": categories})

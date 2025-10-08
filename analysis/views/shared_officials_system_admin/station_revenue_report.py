@@ -16,7 +16,7 @@ from workstations.models import WorkStation
 
 
 @api_view(["GET"])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def station_revenue_report(request):
     """
     Provides a revenue report aggregated by workstation within a specified date range.

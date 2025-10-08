@@ -27,7 +27,7 @@ from workstations.models import WorkStation
 
 
 @api_view(["GET"])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def admin_station_ontroller_revenue_report(request):
     """
     Generates a trend report of revenue contributed by individual controllers

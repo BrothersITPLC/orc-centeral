@@ -15,7 +15,7 @@ from drivers.models import Driver
 
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
-def cashier_drivers_degistered_trends_report(request):
+def cashier_drivers_registered_trends_report(request):
     """
     Generates a trend report on the number of drivers registered at a specific
     workstation (cashier station), aggregated by day of the week, week of the month,

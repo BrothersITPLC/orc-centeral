@@ -1,14 +1,12 @@
-from collections import defaultdict
 from datetime import datetime, timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.db.models import Case, CharField, DecimalField, Q, Sum
+from django.db.models import Case, CharField, Q, Sum
 from django.db.models import Value as V
 from django.db.models import When
 from django.db.models.functions import (
     Coalesce,
-    ExtractDay,
     ExtractHour,
     ExtractMonth,
     ExtractWeekDay,

@@ -14,7 +14,7 @@ from ..helpers import annotate_revenue_on_checkins
 
 
 @api_view(["GET"])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def weekly_revenue_report(request):
     """
     Provides a report of total revenue, total amount (weight), and transaction

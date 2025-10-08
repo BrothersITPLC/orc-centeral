@@ -2,8 +2,8 @@ from .cashier_combined_revenue_trends_report import (
     cashier_combined_revenue_trends_report,
 )
 from .cashier_daily_summary_report import cashier_daily_summary_report
-from .cashier_drivers_degistered_trends_report import (
-    cashier_drivers_degistered_trends_report,
+from .cashier_drivers_registered_trends_report import (
+    cashier_drivers_registered_trends_report,
 )
 from .cashier_incremental_weight_trends import cashier_incremental_weight_trends
 from .cashier_revenue_trends_report import cashier_revenue_trends_report
