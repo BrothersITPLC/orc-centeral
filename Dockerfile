@@ -2,9 +2,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq-dev gcc dos2unix \
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    gcc \
+    cron \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -19,10 +21,8 @@ RUN dos2unix /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 # Environment settings
 ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1  
+ENV PYTHONDONTWRITEBYTECODE=1
 
 EXPOSE 8000
 
-# Use ENTRYPOINT to run your script
-# ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["sh", "/app/entrypoint.sh"]
