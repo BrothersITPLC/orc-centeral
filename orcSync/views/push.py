@@ -5,7 +5,7 @@ from datetime import datetime
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
-from django.db import models, transaction
+from django.db import IntegrityError, models, transaction
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
@@ -58,22 +58,45 @@ class PushChangesView(APIView):
             else:
                 data_fields[field_name] = value
 
-        # First pass: get or create instance
         created = False
         try:
             instance = Model.objects.get(pk=object_id)
-            # This is an update
-            for attr, value in data_fields.items():
-                setattr(instance, attr, value)
+            # Update existing record
+            for attr, val in data_fields.items():
+                setattr(instance, attr, val)
             operation = "updated"
         except Model.DoesNotExist:
             data_fields["pk"] = object_id
             instance = Model(**data_fields)
-            created = True
             operation = "created"
 
-        instance._is_sync_operation = True
-        instance.save()
+        # Attempt to save, handle unique constraint conflicts
+        try:
+            instance._is_sync_operation = True
+            instance.save()
+        except IntegrityError:
+            # Conflict: find existing instance using unique fields
+            unique_fields = [
+                f.name for f in Model._meta.fields if f.unique and f.name in data_fields
+            ]
+            filter_kwargs = {f: data_fields[f] for f in unique_fields}
+            existing_instance = Model.objects.filter(**filter_kwargs).first()
+            if existing_instance:
+                # Compare by updated_at if exists
+                incoming_updated = data_fields.get("updated_at")
+                existing_updated = getattr(existing_instance, "updated_at", None)
+                if incoming_updated and (
+                    not existing_updated or incoming_updated > existing_updated
+                ):
+                    for key, val in data_fields.items():
+                        setattr(existing_instance, key, val)
+                    existing_instance._is_sync_operation = True
+                    existing_instance.save()
+                instance = existing_instance
+                operation = "updated"
+            else:
+                # If no matching record found, re-raise
+                raise
 
         # Save files
         for field_name, file_data in file_fields.items():
@@ -87,7 +110,7 @@ class PushChangesView(APIView):
                 getattr(instance, field_name).delete(save=False)
         instance.save()
 
-        # Add to pending_relations for second pass
+        # Queue for FK/M2M resolution
         if fk_fields or m2m_fields:
             pending_relations.append((instance, fk_fields, m2m_fields))
 
