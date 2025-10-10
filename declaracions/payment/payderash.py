@@ -15,7 +15,9 @@ from rest_framework.views import APIView
 
 from declaracions.models import Checkin, Declaracion, PaymentMethod
 from localcheckings.models import JourneyWithoutTruck
+from orcSync.permissions import WorkstationHasAPIKey
 from path.models import Path, PathStation
+from users.models import CustomUser
 
 
 def generate_short_uuid():
@@ -25,7 +27,8 @@ def generate_short_uuid():
 
 
 class DerashPay(APIView):
-    permission_classes = [AllowAny]
+    # permission_classes = [AllowAny]
+    # permission_classes = [WorkstationHasAPIKey]
 
     def post(self, request):
         try:
@@ -36,7 +39,7 @@ class DerashPay(APIView):
             email = data.get("email")
             bill_id = generate_short_uuid()
             checkin_id = data.get("id")
-            user = self.request.user
+            user = request.user
             print(bill_id)
             headers = {
                 "Content-Type": "application/json",

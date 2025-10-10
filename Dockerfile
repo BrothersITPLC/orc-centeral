@@ -17,12 +17,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Fix line endings and ensure execute permission
-RUN dos2unix /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+# RUN dos2unix /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 # Environment settings
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 EXPOSE 8000
-
-CMD ["sh", "/app/entrypoint.sh"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# CMD ["sh", "/app/entrypoint.sh"]
