@@ -7,6 +7,7 @@ from rest_framework_api_key.permissions import HasAPIKey
 from orcSync.models import ChangeEvent, SyncAcknowledgement
 from orcSync.permissions import WorkstationHasAPIKey
 from orcSync.serializers import OutboundChangeSerializer
+from workstations.models import WorkStation
 
 
 class GetPendingChangesView(APIView):

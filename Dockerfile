@@ -9,16 +9,20 @@ RUN apt-get update && apt-get install -y \
     procps \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . /app/
+# Copy project files
+COPY . .
 
-RUN chmod +x /app/entrypoint.sh
+# Fix line endings and ensure execute permission
+# RUN dos2unix /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
+# Environment settings
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 EXPOSE 8000
-
-CMD ["sh", "/app/entrypoint.sh"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# CMD ["sh", "/app/entrypoint.sh"]

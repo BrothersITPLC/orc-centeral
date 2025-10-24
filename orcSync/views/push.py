@@ -1,11 +1,10 @@
 import base64
-import traceback
 from datetime import datetime
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
-from django.db import models, transaction
+from django.db import IntegrityError, models, transaction
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
@@ -26,14 +25,12 @@ class PushChangesView(APIView):
         action = change_data["action"]
         payload = change_data["data_payload"]
         Model = apps.get_model(model_label)
-
         if action == "D":
             Model.objects.filter(pk=object_id).delete()
             return "deleted"
 
         file_fields, data_fields, fk_fields, m2m_fields = {}, {}, {}, {}
 
-        # Split fields into simple data, foreign keys, many-to-many, and files
         for field_name, value in payload.items():
             if not hasattr(Model, field_name) or value is None:
                 continue
@@ -58,24 +55,43 @@ class PushChangesView(APIView):
             else:
                 data_fields[field_name] = value
 
-        # First pass: get or create instance
-        created = False
-        try:
-            instance = Model.objects.get(pk=object_id)
-            # This is an update
-            for attr, value in data_fields.items():
-                setattr(instance, attr, value)
-            operation = "updated"
-        except Model.DoesNotExist:
-            data_fields["pk"] = object_id
-            instance = Model(**data_fields)
-            created = True
-            operation = "created"
+        instance = None
+        operation = None
 
-        instance._is_sync_operation = True
-        instance.save()
+        # ------------------------------
+        # Start atomic block for this object
+        # ------------------------------
+        with transaction.atomic():
+            # 1️⃣ Try to get by PK first
+            instance = Model.objects.filter(pk=object_id).first()
 
-        # Save files
+            # 2️⃣ If not found, try to get by unique fields to avoid duplicates
+            if not instance:
+                unique_fields = [
+                    f.name
+                    for f in Model._meta.fields
+                    if f.unique and f.name in data_fields
+                ]
+                filters = {f: data_fields[f] for f in unique_fields}
+                if filters:
+                    instance = Model.objects.filter(**filters).first()
+
+            # 3️⃣ Create new if still not found
+            if not instance:
+                data_fields["pk"] = object_id
+                instance = Model(**data_fields)
+                operation = "created"
+            else:
+                # Update existing
+                for key, val in data_fields.items():
+                    if key != Model._meta.pk.name:
+                        setattr(instance, key, val)
+                operation = "updated"
+
+            instance._is_sync_operation = True
+            instance.save()
+
+        # Handle files after saving
         for field_name, file_data in file_fields.items():
             if file_data and "filename" in file_data and "content" in file_data:
                 filename = file_data["filename"]
@@ -84,19 +100,17 @@ class PushChangesView(APIView):
                     filename, ContentFile(content), save=False
                 )
             else:
-                getattr(instance, field_name).delete(save=False)
+                current_file = getattr(instance, field_name)
+                if current_file:
+                    current_file.delete(save=False)
         instance.save()
 
-        # Add to pending_relations for second pass
         if fk_fields or m2m_fields:
             pending_relations.append((instance, fk_fields, m2m_fields))
 
         return operation
 
     def _resolve_pending_relations(self, pending_relations):
-        """
-        After all instances are created/updated, set foreign key and many-to-many relations.
-        """
         for instance, fk_fields, m2m_fields in pending_relations:
             for field_name, related_id in fk_fields.items():
                 field = instance._meta.get_field(field_name)
@@ -105,9 +119,7 @@ class PushChangesView(APIView):
                     related_instance = RelatedModel.objects.get(pk=related_id)
                     setattr(instance, field_name, related_instance)
                 except RelatedModel.DoesNotExist:
-                    # Foreign key target not yet available — skip for now
                     continue
-
             instance.save()
 
             for field_name, related_ids in m2m_fields.items():
@@ -118,12 +130,11 @@ class PushChangesView(APIView):
 
     def post(self, request, *args, **kwargs):
         source_workstation = request._request.workstation
-        list_serializer = InboundChangeSerializer(data=request.data, many=True)
+        serializer = InboundChangeSerializer(data=request.data, many=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        if not list_serializer.is_valid():
-            return Response(list_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        validated_changes = list_serializer.validated_data
+        validated_changes = serializer.validated_data
         if not validated_changes:
             return Response(
                 {"status": "success", "message": "No changes processed."},
@@ -131,46 +142,42 @@ class PushChangesView(APIView):
             )
 
         pending_relations = []
+        results = []
+
+        other_workstations = WorkStation.objects.exclude(pk=source_workstation.pk)
 
         try:
-            with transaction.atomic():
-                other_workstations = WorkStation.objects.exclude(
-                    pk=source_workstation.pk
+            # First pass: create/update base objects
+            for change_data in validated_changes:
+                operation = self._apply_change(change_data, pending_relations)
+                results.append(
+                    (change_data["model"], change_data["object_id"], operation)
                 )
-                results = []
 
-                # First pass: create/update base objects
-                for change_data in validated_changes:
-                    operation = self._apply_change(change_data, pending_relations)
-                    results.append(
-                        (change_data["model"], change_data["object_id"], operation)
-                    )
+                # Create ChangeEvent
+                content_type = ContentType.objects.get_for_model(
+                    apps.get_model(change_data["model"])
+                )
+                event = ChangeEvent.objects.create(
+                    object_id=str(change_data["object_id"]),
+                    content_type=content_type,
+                    action=change_data["action"],
+                    data_payload=change_data["data_payload"],
+                    source_workstation=source_workstation,
+                )
 
-                    # Create ChangeEvent
-                    content_type = ContentType.objects.get_for_model(
-                        apps.get_model(change_data["model"])
-                    )
-                    event = ChangeEvent.objects.create(
-                        object_id=str(change_data["object_id"]),
-                        content_type=content_type,
-                        action=change_data["action"],
-                        data_payload=change_data["data_payload"],
-                        source_workstation=source_workstation,
-                    )
-                    # Create sync acknowledgements
-                    acks_to_create = [
-                        SyncAcknowledgement(
-                            change_event=event, destination_workstation=ws
-                        )
-                        for ws in other_workstations
-                    ]
-                    if acks_to_create:
-                        SyncAcknowledgement.objects.bulk_create(acks_to_create)
+                # Create sync acknowledgements
+                acks_to_create = [
+                    SyncAcknowledgement(change_event=event, destination_workstation=ws)
+                    for ws in other_workstations
+                ]
+                if acks_to_create:
+                    SyncAcknowledgement.objects.bulk_create(acks_to_create)
 
-                # Second pass: resolve foreign keys and M2M
-                self._resolve_pending_relations(pending_relations)
+            # Second pass: resolve FK/M2M relations
+            self._resolve_pending_relations(pending_relations)
 
-        except Exception as e:
+        except Exception:
             import traceback
 
             traceback.print_exc()

@@ -13,11 +13,13 @@ class WorkstationHasAPIKey(BasePermission):
 
     def has_permission(self, request, view):
         header = request.META.get("HTTP_AUTHORIZATION")
-        if not header or not header.lower().startswith("api-key "):
+        print(header, " it is header")
+        if not header or not header.lower().startswith("api-key"):
             return False
 
         try:
-            _, key = header.split()
+            key = header.split(" ")[1]
+            print(key, " it is key")
         except ValueError:
             return False
 
@@ -25,9 +27,11 @@ class WorkstationHasAPIKey(BasePermission):
             credential = StationCredential.objects.select_related("location").get(
                 api_key=key
             )
+            print(credential, " it is credential")
             workstation = credential.location
             request._request.workstation = workstation
 
             return True
         except StationCredential.DoesNotExist:
+            print("SYNC_SERVER WARNING: API Key not found.")
             return False
