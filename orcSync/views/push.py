@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
 from django.db import IntegrityError, models, transaction
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema, OpenApiExample
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -17,6 +18,13 @@ from workstations.models import WorkStation
 
 
 class PushChangesView(APIView):
+    """
+    API view for workstations to push data changes to the central server.
+    
+    Handles incoming change events from workstations, applies them to the database,
+    and propagates them to other workstations for synchronization.
+    """
+    
     permission_classes = [WorkstationHasAPIKey]
 
     def _apply_change(self, change_data: dict, pending_relations: list):
@@ -128,6 +136,106 @@ class PushChangesView(APIView):
                 related_instances = RelatedModel.objects.filter(pk__in=related_ids)
                 field.set(related_instances)
 
+
+    @extend_schema(
+        summary="Push changes from workstation to central server",
+        description="""Push data changes from a workstation to the central server for synchronization.
+        
+        **Authentication:**
+        - Requires workstation API key authentication
+        
+        **Process:**
+        1. Validates incoming change events
+        2. Queues changes for background processing
+        3. Returns immediately with 202 Accepted
+        4. Changes are processed asynchronously by Celery worker
+        5. Creates ChangeEvent records for propagation
+        6. Generates SyncAcknowledgement records for other workstations
+        
+        **Important:**
+        - This endpoint returns **202 Accepted** immediately
+        - Changes are processed in the background
+        - Use `/get-pending/` to confirm changes have propagated
+        - Check `acknowledged_events` array in `/get-pending/` response
+        
+        **Change Actions:**
+        - `C`: Create new record
+        - `U`: Update existing record
+        - `D`: Delete record
+        
+        **Features:**
+        - Async processing prevents request blocking
+        - Atomic transactions per object
+        - Duplicate prevention using unique fields
+        - Two-pass processing (base objects, then relations)
+        - File handling with base64 encoding
+        - Automatic propagation to other workstations
+        - Automatic retry on failure (up to 3 times)
+        
+        **Request Format:**
+        Array of change objects, each containing:
+        - `model`: Model label (e.g., "drivers.Driver")
+        - `object_id`: Primary key of the object
+        - `action`: Action type (C/U/D)
+        - `data_payload`: Object data including relationships
+        """,
+        tags=["Sync - Data Transfer"],
+        request=InboundChangeSerializer(many=True),
+        responses={
+            202: {
+                "description": "Changes accepted for processing",
+                "type": "object",
+                "properties": {
+                    "status": {"type": "string"},
+                    "message": {"type": "string"},
+                    "task_id": {"type": "string"},
+                    "info": {"type": "string"}
+                }
+            },
+            400: {"description": "Bad Request - Invalid change data"},
+            401: {"description": "Unauthorized - Invalid API key"},
+        },
+        examples=[
+            OpenApiExample(
+                "Push Changes Request",
+                value=[
+                    {
+                        "model": "drivers.Driver",
+                        "object_id": 123,
+                        "action": "U",
+                        "data_payload": {
+                            "first_name": "Abebe",
+                            "last_name": "Tadesse",
+                            "license_number": "ET-12345",
+                            "phone_number": "+251911234567"
+                        }
+                    },
+                    {
+                        "model": "trucks.Truck",
+                        "object_id": 456,
+                        "action": "C",
+                        "data_payload": {
+                            "plate_number": "AA-12345",
+                            "chassis_number": "CH123456",
+                            "owner": 789
+                        }
+                    }
+                ],
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Accepted Response",
+                value={
+                    "status": "accepted",
+                    "message": "Accepted 2 changes for processing.",
+                    "task_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                    "info": "Changes are being processed in the background. Check /get-pending/ for confirmation."
+                },
+                response_only=True,
+                status_codes=["202"],
+            ),
+        ],
+    )
     def post(self, request, *args, **kwargs):
         source_workstation = request._request.workstation
         serializer = InboundChangeSerializer(data=request.data, many=True)
@@ -137,62 +245,25 @@ class PushChangesView(APIView):
         validated_changes = serializer.validated_data
         if not validated_changes:
             return Response(
-                {"status": "success", "message": "No changes processed."},
+                {"status": "success", "message": "No changes to process."},
                 status=status.HTTP_200_OK,
             )
 
-        pending_relations = []
-        results = []
-
-        other_workstations = WorkStation.objects.exclude(pk=source_workstation.pk)
-
-        try:
-            # First pass: create/update base objects
-            for change_data in validated_changes:
-                operation = self._apply_change(change_data, pending_relations)
-                results.append(
-                    (change_data["model"], change_data["object_id"], operation)
-                )
-
-                # Create ChangeEvent
-                content_type = ContentType.objects.get_for_model(
-                    apps.get_model(change_data["model"])
-                )
-                event = ChangeEvent.objects.create(
-                    object_id=str(change_data["object_id"]),
-                    content_type=content_type,
-                    action=change_data["action"],
-                    data_payload=change_data["data_payload"],
-                    source_workstation=source_workstation,
-                )
-
-                # Create sync acknowledgements
-                acks_to_create = [
-                    SyncAcknowledgement(change_event=event, destination_workstation=ws)
-                    for ws in other_workstations
-                ]
-                if acks_to_create:
-                    SyncAcknowledgement.objects.bulk_create(acks_to_create)
-
-            # Second pass: resolve FK/M2M relations
-            self._resolve_pending_relations(pending_relations)
-
-        except Exception:
-            import traceback
-
-            traceback.print_exc()
-            return Response(
-                {
-                    "error": "An internal server error occurred while processing changes."
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        # Queue async task to process changes in background
+        from orcSync.tasks.task import process_pushed_changes_async
+        
+        task = process_pushed_changes_async.delay(
+            source_workstation_id=source_workstation.pk,
+            validated_changes=validated_changes,
+        )
 
         return Response(
             {
-                "status": "success",
-                "message": f"Processed {len(validated_changes)} changes.",
-                "details": results,
+                "status": "accepted",
+                "message": f"Accepted {len(validated_changes)} changes for processing.",
+                "task_id": task.id,
+                "info": "Changes are being processed in the background. Check /get-pending/ for confirmation.",
             },
-            status=status.HTTP_201_CREATED,
+            status=status.HTTP_202_ACCEPTED,
         )
+

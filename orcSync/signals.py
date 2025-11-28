@@ -1,53 +1,60 @@
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 
-from orcSync.models import ChangeEvent, SyncAcknowledgement
 from orcSync.serializers import CentralGenericModelSerializer
-from workstations.models import WorkStation
 
 
 def create_server_change_event(instance, action):
     """
-    Creates a ChangeEvent and SyncAcknowledgements for all active workstations.
+    Queues an async task to create a ChangeEvent and SyncAcknowledgements.
+    This prevents blocking the main request thread.
+    
+    Uses transaction.on_commit() to ensure the task is only queued after
+    the database transaction commits successfully.
     """
+    # Skip if this is a sync operation from another workstation
     if hasattr(instance, "_is_sync_operation"):
         return
 
-    with transaction.atomic():
+    # Serialize the instance data
+    class DynamicSerializer(CentralGenericModelSerializer):
+        class Meta:
+            model = instance.__class__
+            fields = "__all__"
 
-        class DynamicSerializer(CentralGenericModelSerializer):
-            class Meta:
-                model = instance.__class__
-                fields = "__all__"
-
-        serializer = DynamicSerializer(instance)
-
-        event = ChangeEvent.objects.create(
-            content_type=ContentType.objects.get_for_model(instance.__class__),
-            object_id=instance.pk,
+    serializer = DynamicSerializer(instance)
+    
+    # Get model metadata
+    app_label = instance._meta.app_label
+    model_name = instance.__class__.__name__
+    object_id = instance.pk
+    data_payload = serializer.data
+    
+    # Queue the async task AFTER the transaction commits
+    # This ensures the object exists in the DB before the task runs
+    def queue_task():
+        from orcSync.tasks.task import create_change_event_async
+        create_change_event_async.delay(
+            app_label=app_label,
+            model_name=model_name,
+            object_id=object_id,
             action=action,
-            data_payload=serializer.data,
-            source_workstation=None,
+            data_payload=data_payload,
         )
-
-        all_workstations = WorkStation.objects.all()
-        acks_to_create = [
-            SyncAcknowledgement(change_event=event, destination_workstation=ws)
-            for ws in all_workstations
-        ]
-        if acks_to_create:
-            SyncAcknowledgement.objects.bulk_create(acks_to_create)
-
-        print(
-            f"SYNC_SERVER: Logged local '{action}' for {instance.__class__.__name__} {instance.pk}"
-        )
+    
+    transaction.on_commit(queue_task)
+    
+    print(
+        f"SYNC_SERVER: Queued async task for '{action}' on {instance.__class__.__name__} {instance.pk}"
+    )
 
 
 def handle_save(sender, instance, created, **kwargs):
+    """Signal handler for post_save - queues async task for create/update"""
     action = "C" if created else "U"
     create_server_change_event(instance, action)
 
 
 def handle_delete(sender, instance, **kwargs):
-    create_server_change_event(instance, "D")
+    """Signal handler for pre_delete - queues async task for delete"""
     create_server_change_event(instance, "D")

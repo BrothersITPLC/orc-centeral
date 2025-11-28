@@ -65,6 +65,12 @@ DATABASES = {
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
         "HOST": os.environ.get("POSTGRES_HOST"),
         "PORT": os.environ.get("POSTGRES_PORT"),
+        "CONN_MAX_AGE": 60, 
+        "CONN_HEALTH_CHECKS": True, 
+        "OPTIONS": {
+            "connect_timeout": 10,  
+            "options": "-c statement_timeout=30000"  
+        },
     },
     "central": {
         "ENGINE": "django.db.backends.postgresql",
@@ -72,9 +78,41 @@ DATABASES = {
         "USER": os.environ.get("POSTGRES_USER"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
         "HOST": "local_postgres",
-        "PORT": 5432,
+        "PORT": 5432,        
+        "CONN_MAX_AGE": 60, 
+        "CONN_HEALTH_CHECKS": True, 
+        "OPTIONS": {
+            "connect_timeout": 10,  
+            "options": "-c statement_timeout=30000"  
+        },
     },
 }
+
+# Celery Configuration
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://redis:6379/1")
+
+# Task acknowledgment and reliability
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 50
+
+# Task time limits
+CELERY_TASK_SOFT_TIME_LIMIT = 300  # 5 minutes soft limit
+CELERY_TASK_TIME_LIMIT = 360  # 6 minutes hard limit
+
+# Task retry policy
+CELERY_TASK_RETRY_POLICY = {
+    "max_retries": 3,
+    "interval_start": 5,
+    "interval_step": 10,
+    "interval_max": 60,
+}
+
+# Default auto field
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 
 
 # Email settings
@@ -117,25 +155,25 @@ INSTALLED_APPS = [
     "django_filters",
     "corsheaders",
     "auditlog",
+    "drf_spectacular",
+    "django_pandas",
     # Moved to correct position
-    "users",
-    "address",
     "drivers",
+    "address",
+    "tax",
+    "exporters",
     "workstations",
     "trucks",
-    "declaracions",
-    "exporters",
-    "tax",
-    "analysis",
-    "drf_yasg",
-    "django_pandas",
-    "core",
-    "localcheckings",
-    "audit",
     "path",
     "news",
+    "audit",
     "api",
+    "users",
     "orcSync",
+    "localcheckings",
+    "declaracions",
+    "analysis",
+    "core",
 ]
 
 MIDDLEWARE = [
@@ -212,3 +250,55 @@ SYNCHRONIZABLE_MODELS = [
 
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "ORC API Documentation",
+    "DESCRIPTION": "Complete API documentation for the ORC (Oromia Revenue Commission) system. This API provides endpoints for managing addresses, users, trucks, workstations, drivers, declarations, exporters, tax, and more.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "CONTACT": {
+        "name": "ORC Development Team",
+        "email": "contact@example.com",
+    },
+    "LICENSE": {
+        "name": "BSD License",
+    },
+    "SERVERS": [
+        {"url": "http://127.0.0.1:8000", "description": "Local Development Server"},
+        {"url": "http://127.0.0.1:5002", "description": "Alternative Local Server"},
+    ],
+    # Schema generation settings
+    "SCHEMA_PATH_PREFIX": r"/api/",
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SORT_OPERATIONS": False,
+    # Swagger UI settings
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "persistAuthorization": True,
+        "displayOperationId": True,
+        "filter": True,
+        "tryItOutEnabled": True,
+    },
+    # Security schemes
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+            }
+        }
+    },
+    "SECURITY": [{"bearerAuth": []}],
+    # Preprocessing
+    "PREPROCESSING_HOOKS": [],
+    "POSTPROCESSING_HOOKS": [],
+    # Enum settings
+    "ENUM_NAME_OVERRIDES": {},
+    # Component naming
+    "COMPONENT_NO_READ_ONLY_REQUIRED": False,
+}

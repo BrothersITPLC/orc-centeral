@@ -1,5 +1,3 @@
-# utils.py
-
 import os
 import secrets
 import string
@@ -7,7 +5,6 @@ import threading
 from datetime import datetime
 from uuid import uuid4
 
-from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -58,28 +55,6 @@ def send_verification_email(user, request=None):
     return verification_token
 
 
-def uploadTo(instance, filename):
-    # Extract the file extension
-    ext = filename.split(".")[-1]
-    # Generate a unique filename using UUID
-    unique_filename = f"{uuid4().hex}.{ext}"
-
-    # Optional: Organize by date
-    date_path = datetime.now().strftime("%Y/%m/%d")
-
-    # Construct the final upload path
-    path = os.path.join(
-        "posts",
-        instance.__class__.__name__.lower(),
-        str(instance.pk)
-        or "unassigned",  # Instance ID or 'unassigned' if instance hasn't been saved yet
-        date_path,
-        unique_filename,
-    )
-    print(path, "this is the path")
-    return path
-
-
 _thread_locals = threading.local()
 
 
@@ -89,11 +64,6 @@ def get_current_user():
 
 def set_current_user(user):
     _thread_locals.user = user
-
-
-import os
-from datetime import datetime
-from uuid import uuid4
 
 
 def uploadTo(instance, filename):

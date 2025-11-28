@@ -1,4 +1,5 @@
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema, OpenApiExample
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -18,6 +19,64 @@ class GetPendingChangesView(APIView):
 
     permission_classes = [WorkstationHasAPIKey]
 
+    @extend_schema(
+        summary="Get pending changes for workstation",
+        description="""Retrieve all pending changes that a workstation needs to apply.
+        
+        **Authentication:**
+        - Requires workstation API key authentication
+        
+        **Process:**
+        1. Identifies the requesting workstation via API key
+        2. Retrieves all pending SyncAcknowledgements for this workstation
+        3. Returns the associated ChangeEvents with full data
+        4. Returns list of fully acknowledged events from this workstation
+        5. Updates workstation's last_seen timestamp
+        
+        **Response Structure:**
+        - `pending_changes`: Array of changes to apply locally
+        - `acknowledged_events`: Array of event IDs that have been fully synced
+        
+        **Use Case:**
+        - Workstation polls this endpoint periodically
+        - Receives changes from other workstations
+        - Learns which of its own changes have propagated
+        """,
+        tags=["Sync - Data Transfer"],
+        responses={
+            200: {
+                "description": "Pending changes retrieved successfully",
+                "type": "object",
+                "properties": {
+                    "pending_changes": {"type": "array"},
+                    "acknowledged_events": {"type": "array"}
+                }
+            },
+            401: {"description": "Unauthorized - Invalid API key"},
+        },
+        examples=[
+            OpenApiExample(
+                "Get Pending Response",
+                value={
+                    "pending_changes": [
+                        {
+                            "id": 123,
+                            "model": "drivers.Driver",
+                            "object_id": 456,
+                            "action": "U",
+                            "data_payload": {
+                                "first_name": "Abebe",
+                                "last_name": "Tadesse"
+                            },
+                            "timestamp": "2024-01-20T10:30:00Z"
+                        }
+                    ],
+                    "acknowledged_events": [101, 102, 103]
+                },
+                response_only=True,
+            ),
+        ],
+    )
     def get(self, request, *args, **kwargs):
         workstation = request._request.workstation
 
