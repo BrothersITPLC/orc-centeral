@@ -166,3 +166,5 @@ nginx/
 static/
 
 scripts/
+staticfiles/
+media/

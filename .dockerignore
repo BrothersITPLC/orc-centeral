@@ -47,3 +47,5 @@ config
 
 sonar-project.properties
 scripts/
+staticfiles/
+media/

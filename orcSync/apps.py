@@ -1,11 +1,3 @@
-# from django.apps import AppConfig
-
-
-# class OrcsyncConfig(AppConfig):
-#     default_auto_field = 'django.db.models.BigAutoField'
-#     name = 'orcSync'
-
-
 from django.apps import AppConfig
 from django.conf import settings
 from django.db.models.signals import post_save, pre_delete

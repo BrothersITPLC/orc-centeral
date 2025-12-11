@@ -13,8 +13,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "False"
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG") != "False"
+
 ROOT_URLCONF = "InsaBackednLatest.urls"
 # Internationalization
 LANGUAGE_CODE = "en-us"
@@ -210,22 +210,6 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-
-# SYNCHRONIZABLE_MODELS = [
-#     "drivers.Driver",
-#     "workstations.WorkStation",
-#     "workstations.WorkedAt",
-#     "trucks.TruckOwner",
-#     "trucks.Truck",
-#     "exporters.TaxPayerType",
-#     "exporters.Exporter",
-#     "tax.Tax",
-#     "users.Report",
-#     "users.UserStatus",
-#     "users.CustomUser",
-#     "users.Department",
-# ]
-
 SYNCHRONIZABLE_MODELS = [
     "drivers.Driver",
     "workstations.WorkStation",
@@ -244,8 +228,13 @@ SYNCHRONIZABLE_MODELS = [
     "address.Woreda",
     "declaracions.Commodity",
     "declaracions.PaymentMethod",
+    "declaracions.Declaracion",
+    "declaracions.Checkin",
+    "declaracions.ChangeTruck",
     "declaracions.ManualPayment",
     "auth.Group",
+    "path.Path",
+    "path.PathStation",
 ]
 
 USE_X_FORWARDED_HOST = True
@@ -302,3 +291,8 @@ SPECTACULAR_SETTINGS = {
     # Component naming
     "COMPONENT_NO_READ_ONLY_REQUIRED": False,
 }
+
+
+
+
+
