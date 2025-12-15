@@ -15,10 +15,6 @@ class GroupPermission(permissions.BasePermission):
         # Check if any of the user's groups have the required permission
         try:
             group = Group.objects.get(name=request.user.role)
-            # user_permissions = request.user.get_user_permissions()
-            # print(
-            #     user_permissions, " : this is the user permission given to him or her"
-            # )
         except Group.DoesNotExist:
 
             return False

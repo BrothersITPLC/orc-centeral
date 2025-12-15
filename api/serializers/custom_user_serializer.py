@@ -4,7 +4,6 @@ from users.models import CustomUser
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    # role_name = serializers.CharField(source="role.name", read_only=True)
 
     class Meta:
         model = CustomUser

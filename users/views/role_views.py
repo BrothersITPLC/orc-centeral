@@ -46,6 +46,15 @@ class GroupViewSet(viewsets.ModelViewSet):
             201: GroupSerializer,
             400: {"description": "Bad Request"},
         },
+        examples=[
+            OpenApiExample(
+                "Group Create",
+                value={
+                    "name": "Supervisor"
+                },
+                request_only=True,
+            ),
+        ],
     )
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
@@ -72,6 +81,15 @@ class GroupViewSet(viewsets.ModelViewSet):
             400: {"description": "Bad Request"},
             404: {"description": "Not Found"},
         },
+        examples=[
+            OpenApiExample(
+                "Group Update",
+                value={
+                    "name": "Head Supervisor"
+                },
+                request_only=True,
+            ),
+        ],
     )
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
@@ -86,6 +104,15 @@ class GroupViewSet(viewsets.ModelViewSet):
             400: {"description": "Bad Request"},
             404: {"description": "Not Found"},
         },
+        examples=[
+            OpenApiExample(
+                "Group Partial Update",
+                value={
+                    "name": "Senior Supervisor"
+                },
+                request_only=True,
+            ),
+        ],
     )
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
@@ -217,6 +244,17 @@ class PermissionViewSet(viewsets.ModelViewSet):
             201: PermissionSerializer,
             400: {"description": "Bad Request"},
         },
+        examples=[
+            OpenApiExample(
+                "Permission Create",
+                value={
+                    "name": "Can view reports",
+                    "codename": "view_reports",
+                    "content_type": 1
+                },
+                request_only=True,
+            ),
+        ],
     )
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
@@ -231,6 +269,17 @@ class PermissionViewSet(viewsets.ModelViewSet):
             400: {"description": "Bad Request"},
             404: {"description": "Not Found"},
         },
+        examples=[
+            OpenApiExample(
+                "Permission Update",
+                value={
+                    "name": "Can view all reports",
+                    "codename": "view_all_reports",
+                    "content_type": 1
+                },
+                request_only=True,
+            ),
+        ],
     )
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
@@ -245,6 +294,15 @@ class PermissionViewSet(viewsets.ModelViewSet):
             400: {"description": "Bad Request"},
             404: {"description": "Not Found"},
         },
+        examples=[
+            OpenApiExample(
+                "Permission Partial Update",
+                value={
+                    "name": "Can view specific reports"
+                },
+                request_only=True,
+            ),
+        ],
     )
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)

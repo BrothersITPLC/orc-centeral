@@ -1,4 +1,4 @@
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiExample
 from rest_framework import viewsets,permissions
 from users.serializers import DepartmentSerializer
 from users.models import Department
@@ -34,6 +34,16 @@ class DepartmentViewSet(viewsets.ModelViewSet):
             201: DepartmentSerializer,
             400: {"description": "Bad Request"},
         },
+        examples=[
+            OpenApiExample(
+                "Department Create",
+                value={
+                    "name": "Logistics",
+                    "description": "Handles all transportation and fleet management."
+                },
+                request_only=True,
+            ),
+        ],
     )
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
@@ -60,6 +70,16 @@ class DepartmentViewSet(viewsets.ModelViewSet):
             400: {"description": "Bad Request"},
             404: {"description": "Not Found"},
         },
+        examples=[
+            OpenApiExample(
+                "Department Update",
+                value={
+                    "name": "Logistics & Transport",
+                    "description": "Updated description for logistics department."
+                },
+                request_only=True,
+            ),
+        ],
     )
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
@@ -74,6 +94,15 @@ class DepartmentViewSet(viewsets.ModelViewSet):
             400: {"description": "Bad Request"},
             404: {"description": "Not Found"},
         },
+        examples=[
+            OpenApiExample(
+                "Department Partial Update",
+                value={
+                    "description": "Minor description update."
+                },
+                request_only=True,
+            ),
+        ],
     )
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
