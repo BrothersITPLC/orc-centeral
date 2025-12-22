@@ -28,11 +28,7 @@ urlpatterns = [
         views.UserProfileViewSet.as_view({"patch": "update_profile"}),
         name="update-profile",
     ),
-    path("verify-email/<str:token>/", views.VerifyEmail.as_view(), name="verify-email"),
     path("assign-station", views.AssignWorkStation.as_view(), name="assign-station"),
-    path(
-        "change-password/", views.ChangePasswordView.as_view(), name="change-password"
-    ),
     path(
         "activate_diactivate",
         views.ActivateandDeactivateUser.as_view(),
@@ -47,6 +43,8 @@ urlpatterns = [
         views.AdminPasswordResetView.as_view(),
         name="admin-password-reset",
     ),
+    # Verify user endpoint for frontend role verification (anti-tampering)
+    path("verify-user", views.VerifyUserView.as_view(), name="verify-user"),
 ]
 
 urlpatterns += router.urls

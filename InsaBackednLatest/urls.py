@@ -7,6 +7,8 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
+from users.admin_views import RateLimitedAdminLoginView
+
 
 api_urlpatterns = [
     path("api/users/", include("users.urls")),
@@ -48,7 +50,8 @@ urlpatterns = [
         name="schema-swagger-ui",
     ),
     path("api_schema/", SpectacularAPIView.as_view(), name="schema-json"),
-    # Admin
+    # Admin with rate-limited login (5 attempts per 5 minutes)
+    path("admin/login/", RateLimitedAdminLoginView.as_view(), name='admin_login'),
     path("admin/", admin.site.urls),
 ]
 

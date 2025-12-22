@@ -22,6 +22,7 @@ from workstations.models import WorkedAt, WorkStation
 from workstations.serializers import WorkedAtSerializer, WorkStationSerializer
 
 from ..models import CustomUser
+from users.utils.password_validator import validate_password_strength
 from .permissions import GroupPermission
 
 
@@ -291,7 +292,21 @@ class ChangePasswordView(APIView):
                     {"old_password": ["Wrong password."]},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            user.set_password(serializer.validated_data["new_password"])
+            
+            # Validate new password strength
+            new_password = serializer.validated_data["new_password"]
+            is_valid, errors = validate_password_strength(new_password)
+            
+            if not is_valid:
+                return Response(
+                    {
+                        "error": "New password does not meet security requirements",
+                        "password_requirements": errors
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            user.set_password(new_password)
             user.save()
             return Response(
                 {"detail": "Password has been changed successfully."},
@@ -556,6 +571,18 @@ class AdminPasswordResetView(APIView):
                 return Response(
                     {"error": "Cannot reset superuser password."},
                     status=status.HTTP_403_FORBIDDEN,
+                )
+            
+            # Validate password strength
+            is_valid, errors = validate_password_strength(new_password)
+            
+            if not is_valid:
+                return Response(
+                    {
+                        "error": "Password does not meet security requirements",
+                        "password_requirements": errors
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
                 )
             
             # Set the new password

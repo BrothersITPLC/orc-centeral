@@ -1,38 +1,24 @@
 import os
 from datetime import timedelta
-from pathlib import Path  # Ensure this import exists
-
+from pathlib import Path  
 from dotenv import load_dotenv
-
-# Load environment variables from .env file
 load_dotenv()
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG") != "False"
+WSGI_APPLICATION = "InsaBackednLatest.wsgi.application"
 
 ROOT_URLCONF = "InsaBackednLatest.urls"
-# Internationalization
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
-# Internationalization
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
-ALLOWED_HOSTS.append("localhost")
-ALLOWED_HOSTS.append("127.0.0.1")
-ALLOWED_HOSTS.append("0.0.0.0")
-ALLOWED_HOSTS.append("localhost:8010")
-ALLOWED_HOSTS.append("192.168.10.42")
-ALLOWED_HOSTS.append("host.docker.internal")
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -47,13 +33,6 @@ TEMPLATES = [
             ],
         },
     },
-]
-
-
-# Custom user model
-AUTH_USER_MODEL = "users.CustomUser"
-AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",
 ]
 
 # Database
@@ -88,59 +67,6 @@ DATABASES = {
     },
 }
 
-# Celery Configuration
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
-CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://redis:6379/1")
-
-# Task acknowledgment and reliability
-CELERY_TASK_ACKS_LATE = True
-CELERY_TASK_REJECT_ON_WORKER_LOST = True
-CELERY_WORKER_PREFETCH_MULTIPLIER = 1
-CELERY_WORKER_MAX_TASKS_PER_CHILD = 50
-
-# Task time limits
-CELERY_TASK_SOFT_TIME_LIMIT = 300  # 5 minutes soft limit
-CELERY_TASK_TIME_LIMIT = 360  # 6 minutes hard limit
-
-# Task retry policy
-CELERY_TASK_RETRY_POLICY = {
-    "max_retries": 3,
-    "interval_start": 5,
-    "interval_step": 10,
-    "interval_max": 60,
-}
-
-# Default auto field
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-
-
-# Email settings
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = os.environ.get("EMAIL_PORT")
-EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
-WSGI_APPLICATION = "InsaBackednLatest.wsgi.application"
-CORS_ALLOW_CREDENTIALS = os.environ.get("CORS_ALLOW_CREDENTIALS") == "True"
-CORS_ALLOW_HEADERS = os.environ.get("CORS_ALLOW_HEADERS", "").split(",")
-
-CORS_ALLOW_METHODS = os.environ.get("CORS_ALLOW_METHODS", "").split(",")
-
-
-# JWT settings
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(
-        minutes=int(os.environ.get("JWT_ACCESS_TOKEN_LIFETIME", "15"))
-    ),
-    "REFRESH_TOKEN_LIFETIME": timedelta(
-        days=int(os.environ.get("JWT_REFRESH_TOKEN_LIFETIME", "1"))
-    ),
-    "SIGNING_KEY": SECRET_KEY,
-    "VERIFYING_KEY": os.environ.get("JWT_VERIFYING_KEY", SECRET_KEY),
-    "AUTH_HEADER_TYPES": ("Bearer",),
-}
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -173,11 +99,14 @@ INSTALLED_APPS = [
     "declaracions",
     "analysis",
     "core",
+    "csp",
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "common.middleware.DisableCSRFForAPIMiddleware",  
@@ -188,27 +117,92 @@ MIDDLEWARE = [
     "common.middleware.AttachJWTTokenMiddleware",
     "common.middleware.RefreshTokenMiddleware",
     "common.middleware.DisplayCurrentUserMiddleware",
+    "common.middleware.InputValidationMiddleware",
+    "csp.middleware.CSPMiddleware",
+    "utils.security_headers.SecurityHeadersMiddleware",
 ]
-# External APIs and Tokens
-DERASH_API_KEY = os.environ.get("DERASH_API_KEY")
-DERASH_SECRET_KEY = os.environ.get("DERASH_SECRET_KEY")
-DERASH_END_POINT = os.environ.get("DERASH_END_POINT")
-WEIGHTBRIDGE_TOKEN = os.environ.get("WEIGHTBRIDGE_TOKEN")
-EXTERNAL_URI_WEIGHT_BRIDGE = os.environ.get("EXTERNAL_URI_WEIGHT_BRIDGE")
-STATIC_URL = "/static/"
+
+
+# Custom user model
+AUTH_USER_MODEL = "users.CustomUser"
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+]
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(
+        minutes=int(os.environ.get("JWT_ACCESS_TOKEN_LIFETIME", "15"))
+    ),
+    "REFRESH_TOKEN_LIFETIME": timedelta(
+        days=int(os.environ.get("JWT_REFRESH_TOKEN_LIFETIME", "7"))
+    ),
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": os.environ.get("JWT_VERIFYING_KEY", SECRET_KEY),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "ROTATE_REFRESH_TOKENS": True,  # Generate new refresh token on each refresh
+    "BLACKLIST_AFTER_ROTATION": True,  # Blacklist old refresh token after rotation
+    "UPDATE_LAST_LOGIN": True,
+}
+
+# Token Configuration - Centralized settings for consistency
+# These values are used across views, middleware, and utilities
+TOKEN_CONFIG = {
+    "ACCESS_TOKEN_LIFETIME_MINUTES": int(os.environ.get("JWT_ACCESS_TOKEN_LIFETIME", "15")),
+    "REFRESH_TOKEN_LIFETIME_DAYS": int(os.environ.get("JWT_REFRESH_TOKEN_LIFETIME", "7")),
+    "SESSION_TOKEN_LIFETIME_DAYS": int(os.environ.get("SESSION_TOKEN_LIFETIME", "7")),
+    "COOKIE_EXPIRATION_DAYS": int(os.environ.get("COOKIE_EXPIRATION_DAYS", "7")),
+}
+
+
 # CORS and CSRF settings
 CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",")
 CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+CORS_ALLOW_CREDENTIALS = os.environ.get("CORS_ALLOW_CREDENTIALS") == "True"
+CORS_ALLOW_HEADERS = os.environ.get("CORS_ALLOW_HEADERS", "").split(",")
+CORS_ALLOW_METHODS = os.environ.get("CORS_ALLOW_METHODS", "").split(",")
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
+ALLOWED_HOSTS.append("localhost")
+ALLOWED_HOSTS.append("127.0.0.1")
+ALLOWED_HOSTS.append("0.0.0.0")
+ALLOWED_HOSTS.append("localhost:8010")
+ALLOWED_HOSTS.append("192.168.10.42")
+ALLOWED_HOSTS.append("host.docker.internal")
+X_FRAME_OPTIONS = "DENY"
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_REFERRER_POLICY = "same-origin"
+
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": ("'self'",),
+        "script-src": ("'self'",),
+        "style-src": ("'self'","'unsafe-inline'",),
+        "img-src": ("'self'","data:",),
+        "font-src": ("'self'",),
+        "connect-src": ("'self'",),
+        "frame-ancestors": ("'none'",),
+    }
+}
+
+
+WEIGHTBRIDGE_TOKEN = os.environ.get("WEIGHTBRIDGE_TOKEN")
+EXTERNAL_URI_WEIGHT_BRIDGE = os.environ.get("EXTERNAL_URI_WEIGHT_BRIDGE")
 
 # Media settings
+STATIC_URL = "/static/"
 MEDIA_ROOT = os.environ.get("MEDIA_ROOT", "/app/media")
 MEDIA_URL = os.environ.get("MEDIA_URL", "/media/")
-
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+
+# WhiteNoise configuration for serving static files in production
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+WHITENOISE_AUTOREFRESH = DEBUG  # Auto-refresh in development, cache in production
+
 
 SYNCHRONIZABLE_MODELS = [
     "drivers.Driver",
@@ -237,8 +231,36 @@ SYNCHRONIZABLE_MODELS = [
     "path.PathStation",
 ]
 
-USE_X_FORWARDED_HOST = True
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# Celery Configuration
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://redis:6379/1")
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 50
+CELERY_TASK_SOFT_TIME_LIMIT = 300 
+CELERY_TASK_TIME_LIMIT = 360 
+CELERY_TASK_RETRY_POLICY = {
+    "max_retries": 3,
+    "interval_start": 5,
+    "interval_step": 10,
+    "interval_max": 60,
+}
+
+# External APIs and Tokens
+DERASH_API_KEY = os.environ.get("DERASH_API_KEY")
+DERASH_SECRET_KEY = os.environ.get("DERASH_SECRET_KEY")
+DERASH_END_POINT = os.environ.get("DERASH_END_POINT")
+
+
+# Email settings
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = os.environ.get("EMAIL_PORT")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
@@ -260,11 +282,9 @@ SPECTACULAR_SETTINGS = {
         {"url": "http://127.0.0.1:8000", "description": "Local Development Server"},
         {"url": "http://127.0.0.1:5002", "description": "Alternative Local Server"},
     ],
-    # Schema generation settings
     "SCHEMA_PATH_PREFIX": r"/api/",
     "COMPONENT_SPLIT_REQUEST": True,
     "SORT_OPERATIONS": False,
-    # Swagger UI settings
     "SWAGGER_UI_SETTINGS": {
         "deepLinking": True,
         "persistAuthorization": True,
@@ -272,7 +292,6 @@ SPECTACULAR_SETTINGS = {
         "filter": True,
         "tryItOutEnabled": True,
     },
-    # Security schemes
     "APPEND_COMPONENTS": {
         "securitySchemes": {
             "bearerAuth": {
@@ -283,16 +302,45 @@ SPECTACULAR_SETTINGS = {
         }
     },
     "SECURITY": [{"bearerAuth": []}],
-    # Preprocessing
     "PREPROCESSING_HOOKS": [],
     "POSTPROCESSING_HOOKS": [],
-    # Enum settings
     "ENUM_NAME_OVERRIDES": {},
-    # Component naming
     "COMPONENT_NO_READ_ONLY_REQUIRED": False,
 }
 
 
 
-
+# Input Validation Settings
+# Centralized security validation for all incoming requests
+INPUT_VALIDATION = {
+    'ENABLED': True,  # Set to False to disable validation middleware
+    'STRICT_MODE': True,  # True = reject malicious requests, False = sanitize and allow
+    'MAX_STRING_LENGTH': 255,  # Default max length for string fields
+    'MAX_TEXT_LENGTH': 5000,  # Max length for content/text/description fields
+    'FIELD_LENGTH_LIMITS': {
+        # Specific field length limits (override defaults)
+        'email': 254,
+        'phone_number': 15,
+        'name': 100,
+        'first_name': 50,
+        'last_name': 50,
+        'company_name': 200,
+        'address': 200,
+        'kebele': 50,
+        'tin_number': 10,
+        'license_number': 20,
+        'plate_number': 20,
+        'description': 1000,
+        'content': 5000,
+        'message': 1000,
+        'title': 200,
+    },
+    'WHITELIST_PATHS': [
+        '/admin/',  # Django admin (has its own protection)
+        '/static/',  # Static files
+        '/media/',  # Media files
+        '/api/sync/',  
+    ],
+    'LOG_VIOLATIONS': True,  # Log security violations for monitoring
+}
 
