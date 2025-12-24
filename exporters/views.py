@@ -50,6 +50,10 @@ class ExporterViewSet(viewsets.ModelViewSet):
             )
 
     def get_permissions(self):
+        if self.action in ["list", "retrieve"]:
+            self.permission_required = None
+            return [permission() for permission in self.permission_classes]
+
         return has_custom_permission(self, "exporter")
 
 
@@ -61,4 +65,9 @@ class TaxPayerTypeViewSets(viewsets.ModelViewSet):
     permission_required = "view_taxpayertype"
 
     def get_permissions(self):
+
+        if self.action in ["list", "retrieve"]:
+            self.permission_required = None
+            return [permission() for permission in self.permission_classes]
+
         return has_custom_permission(self, "taxpayertype")

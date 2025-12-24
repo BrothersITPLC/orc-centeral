@@ -1,25 +1,25 @@
-from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
+from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 
 from helper.custom_pagination import CustomLimitOffsetPagination
 from path.serializers import PathSerializer
-
+from 
 from ..models import Path
 
 
 class PathViewSetWithStation(viewsets.ModelViewSet):
     """
     A viewset for managing paths with station filtering.
-    
+
     Similar to PathViewSet but filters paths based on the current user's station.
     This viewset is used when you need to see only paths that include the user's
     current workstation.
     """
-    
+
     queryset = Path.objects.all()
     serializer_class = PathSerializer
-    permission_classes = [AllowAny]
+    # permission_classes = [AllowAny]
     pagination_class = CustomLimitOffsetPagination
 
     @extend_schema(
@@ -68,12 +68,12 @@ class PathViewSetWithStation(viewsets.ModelViewSet):
                             "created_by": 1,
                             "path_stations": [
                                 {"id": 1, "station": 1, "order": 1},
-                                {"id": 2, "station": 3, "order": 2}
+                                {"id": 2, "station": 3, "order": 2},
                             ],
                             "created_at": "2024-01-15T10:30:00Z",
-                            "updated_at": "2024-01-15T10:30:00Z"
+                            "updated_at": "2024-01-15T10:30:00Z",
                         }
-                    ]
+                    ],
                 },
                 response_only=True,
             ),
