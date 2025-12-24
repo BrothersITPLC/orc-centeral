@@ -90,7 +90,10 @@ class PushChangesView(APIView):
 
             instance._is_sync_operation = True
             instance.save()
-
+            print(
+                "SYNC_SERVER: Saved              -----------------------------------------",
+                instance,
+            )
         # Handle files after saving
         for field_name, file_data in file_fields.items():
             if file_data and "filename" in file_data and "content" in file_data:
