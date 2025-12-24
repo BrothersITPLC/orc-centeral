@@ -164,3 +164,7 @@ coverage-html/
 .secret
 nginx/
 static/
+
+scripts/
+staticfiles/
+media/

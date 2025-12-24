@@ -32,9 +32,12 @@ class PushChangesView(APIView):
         file_fields, data_fields, fk_fields, m2m_fields = {}, {}, {}, {}
 
         for field_name, value in payload.items():
-            if not hasattr(Model, field_name) or value is None:
+            actual_field_name = (
+                field_name.rstrip("_id") if field_name.endswith("_id") else field_name
+            )
+            if not hasattr(Model, actual_field_name) or value is None:
                 continue
-            field_obj = Model._meta.get_field(field_name)
+            field_obj = Model._meta.get_field(actual_field_name)
 
             if isinstance(
                 field_obj, (models.DateTimeField, models.DateField)
@@ -49,7 +52,10 @@ class PushChangesView(APIView):
             ):
                 file_fields[field_name] = value
             elif isinstance(field_obj, models.ForeignKey):
-                fk_fields[field_name] = value
+                if field_name.endswith("_id"):
+                    data_fields[field_name] = value
+                else:
+                    fk_fields[field_name] = value
             elif isinstance(field_obj, models.ManyToManyField):
                 m2m_fields[field_name] = value
             else:
@@ -58,14 +64,8 @@ class PushChangesView(APIView):
         instance = None
         operation = None
 
-        # ------------------------------
-        # Start atomic block for this object
-        # ------------------------------
         with transaction.atomic():
-            # 1️⃣ Try to get by PK first
             instance = Model.objects.filter(pk=object_id).first()
-
-            # 2️⃣ If not found, try to get by unique fields to avoid duplicates
             if not instance:
                 unique_fields = [
                     f.name
@@ -75,14 +75,11 @@ class PushChangesView(APIView):
                 filters = {f: data_fields[f] for f in unique_fields}
                 if filters:
                     instance = Model.objects.filter(**filters).first()
-
-            # 3️⃣ Create new if still not found
             if not instance:
                 data_fields["pk"] = object_id
                 instance = Model(**data_fields)
                 operation = "created"
             else:
-                # Update existing
                 for key, val in data_fields.items():
                     if key != Model._meta.pk.name:
                         setattr(instance, key, val)
@@ -90,11 +87,7 @@ class PushChangesView(APIView):
 
             instance._is_sync_operation = True
             instance.save()
-            print(
-                "SYNC_SERVER: Saved              -----------------------------------------",
-                instance,
-            )
-        # Handle files after saving
+
         for field_name, file_data in file_fields.items():
             if file_data and "filename" in file_data and "content" in file_data:
                 filename = file_data["filename"]
@@ -133,6 +126,7 @@ class PushChangesView(APIView):
 
     def post(self, request, *args, **kwargs):
         source_workstation = request._request.workstation
+
         serializer = InboundChangeSerializer(data=request.data, many=True)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -150,14 +144,12 @@ class PushChangesView(APIView):
         other_workstations = WorkStation.objects.exclude(pk=source_workstation.pk)
 
         try:
-            # First pass: create/update base objects
             for change_data in validated_changes:
                 operation = self._apply_change(change_data, pending_relations)
                 results.append(
                     (change_data["model"], change_data["object_id"], operation)
                 )
 
-                # Create ChangeEvent
                 content_type = ContentType.objects.get_for_model(
                     apps.get_model(change_data["model"])
                 )
@@ -169,7 +161,6 @@ class PushChangesView(APIView):
                     source_workstation=source_workstation,
                 )
 
-                # Create sync acknowledgements
                 acks_to_create = [
                     SyncAcknowledgement(change_event=event, destination_workstation=ws)
                     for ws in other_workstations
@@ -177,7 +168,6 @@ class PushChangesView(APIView):
                 if acks_to_create:
                     SyncAcknowledgement.objects.bulk_create(acks_to_create)
 
-            # Second pass: resolve FK/M2M relations
             self._resolve_pending_relations(pending_relations)
 
         except Exception:

@@ -1,12 +1,12 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
-from .views import (
+from localcheckings.views import (
     CheckinWithoutTruckView,
     UpdateLocalJourney,
+    WithoutTruckCheckinLogic,
     WithoutTruckJourneyViewset,
 )
-from .withoutTruckCheckingLogic import WithoutTruckCheckinLogic
 
 router = DefaultRouter()
 router.register(

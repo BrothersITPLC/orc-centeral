@@ -1,35 +1,66 @@
 services:
   insadb:
     image: postgres:15
-    container_name: central_postgres_primary
-    env_file:
-      - .env
+    container_name: central_${ENV}_postgres
+    env_file: .env
     ports:
-      - "5433:5432"
+      - "${HOST_POSTGRES_PORT:-5432}:5432"
     volumes:
       - central_postgres_data:/var/lib/postgresql/data
     networks:
-      - centeral_orc_net
+      - central_orc_net
     restart: always
+
+  redis:
+    image: redis:7
+    container_name: central_${ENV}_redis
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    ports:
+      - "${HOST_REDIS_PORT:-6379}:6379"
+    volumes:
+      - central_redis_data:/data
+    networks:
+      - central_orc_net
+    restart: always
+
   django_server:
     build: .
-    env_file:
-      - .env
+    container_name: central_${ENV}_django
+    env_file: .env
     volumes:
       - .:/app
       - ./media:/app/media
       - ./staticfiles:/app/staticfiles
       - ./static:/app/static
     ports:
-      - "8000:8000"
+      - "${HOST_DJANGO_PORT:-8000}:8000"
     depends_on:
       - insadb
+      - redis
     networks:
-      - centeral_orc_net
+      - central_orc_net
+    restart: always
+
+  celery_worker:
+    build: .
+    container_name: central_${ENV}_celery_worker
+    env_file: .env
+    command: celery -A InsaBackednLatest worker -l info --concurrency=2 --max-tasks-per-child=50
+    depends_on:
+      - redis
+      - insadb
+      - django_server
+    volumes:
+      - .:/app
+    networks:
+      - central_orc_net
     restart: always
 
 volumes:
   central_postgres_data:
+  central_redis_data:
+
 networks:
-  centeral_orc_net:
+  central_orc_net:
     external: true
+
