@@ -1,4 +1,4 @@
-from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
+from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -13,7 +13,7 @@ from ..models import Woreda
 class WoredaViewset(viewsets.ModelViewSet):
     """
     A viewset for managing woredas.
-    
+
     Provides CRUD operations for Woreda entities and custom filtering by zone/subcity.
     """
 
@@ -28,8 +28,12 @@ class WoredaViewset(viewsets.ModelViewSet):
         tags=["Address - Woreda"],
         responses={
             200: WoredaSerializer(many=True),
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to view woredas"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to view woredas"
+            },
         },
         examples=[
             OpenApiExample(
@@ -42,14 +46,11 @@ class WoredaViewset(viewsets.ModelViewSet):
                         "zone": {
                             "id": 1,
                             "name": "Bole",
-                            "region": {
-                                "id": 1,
-                                "name": "Addis Ababa"
-                            }
+                            "region": {"id": 1, "name": "Addis Ababa"},
                         },
                         "created_at": "2024-01-15T10:30:00Z",
                         "updated_at": "2024-01-15T10:30:00Z",
-                        "created_by": 1
+                        "created_by": 1,
                     }
                 ],
                 response_only=True,
@@ -66,17 +67,20 @@ class WoredaViewset(viewsets.ModelViewSet):
         request=WoredaSerializer,
         responses={
             201: WoredaSerializer,
-            400: {"description": "Bad Request - Invalid data provided or missing zone_id"},
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to create woredas"},
+            400: {
+                "description": "Bad Request - Invalid data provided or missing zone_id"
+            },
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to create woredas"
+            },
         },
         examples=[
             OpenApiExample(
                 "Create Woreda Request",
-                value={
-                    "name": "Woreda 01",
-                    "zone_id": 1
-                },
+                value={"name": "Woreda 01", "zone_id": 1},
                 request_only=True,
             ),
             OpenApiExample(
@@ -87,14 +91,11 @@ class WoredaViewset(viewsets.ModelViewSet):
                     "zone": {
                         "id": 1,
                         "name": "Bole",
-                        "region": {
-                            "id": 1,
-                            "name": "Addis Ababa"
-                        }
+                        "region": {"id": 1, "name": "Addis Ababa"},
                     },
                     "created_at": "2024-01-15T10:30:00Z",
                     "updated_at": "2024-01-15T10:30:00Z",
-                    "created_by": 1
+                    "created_by": 1,
                 },
                 response_only=True,
                 status_codes=["201"],
@@ -110,9 +111,15 @@ class WoredaViewset(viewsets.ModelViewSet):
         tags=["Address - Woreda"],
         responses={
             200: WoredaSerializer,
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to view this woreda"},
-            404: {"description": "Not Found - Woreda with the specified ID does not exist"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to view this woreda"
+            },
+            404: {
+                "description": "Not Found - Woreda with the specified ID does not exist"
+            },
         },
         examples=[
             OpenApiExample(
@@ -123,14 +130,11 @@ class WoredaViewset(viewsets.ModelViewSet):
                     "zone": {
                         "id": 1,
                         "name": "Bole",
-                        "region": {
-                            "id": 1,
-                            "name": "Addis Ababa"
-                        }
+                        "region": {"id": 1, "name": "Addis Ababa"},
                     },
                     "created_at": "2024-01-15T10:30:00Z",
                     "updated_at": "2024-01-15T10:30:00Z",
-                    "created_by": 1
+                    "created_by": 1,
                 },
                 response_only=True,
             ),
@@ -147,17 +151,20 @@ class WoredaViewset(viewsets.ModelViewSet):
         responses={
             200: WoredaSerializer,
             400: {"description": "Bad Request - Invalid data provided"},
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to update this woreda"},
-            404: {"description": "Not Found - Woreda with the specified ID does not exist"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to update this woreda"
+            },
+            404: {
+                "description": "Not Found - Woreda with the specified ID does not exist"
+            },
         },
         examples=[
             OpenApiExample(
                 "Update Request",
-                value={
-                    "name": "Woreda 01",
-                    "zone_id": 1
-                },
+                value={"name": "Woreda 01", "zone_id": 1},
                 request_only=True,
             ),
         ],
@@ -173,23 +180,25 @@ class WoredaViewset(viewsets.ModelViewSet):
         responses={
             200: WoredaSerializer,
             400: {"description": "Bad Request - Invalid data provided"},
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to update this woreda"},
-            404: {"description": "Not Found - Woreda with the specified ID does not exist"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to update this woreda"
+            },
+            404: {
+                "description": "Not Found - Woreda with the specified ID does not exist"
+            },
         },
         examples=[
             OpenApiExample(
                 "Partial Update Request - Name Only",
-                value={
-                    "name": "Woreda 01"
-                },
+                value={"name": "Woreda 01"},
                 request_only=True,
             ),
             OpenApiExample(
                 "Partial Update Request - Zone Only",
-                value={
-                    "zone_id": 2
-                },
+                value={"zone_id": 2},
                 request_only=True,
             ),
         ],
@@ -203,9 +212,15 @@ class WoredaViewset(viewsets.ModelViewSet):
         tags=["Address - Woreda"],
         responses={
             204: {"description": "No Content - Woreda successfully deleted"},
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to delete this woreda"},
-            404: {"description": "Not Found - Woreda with the specified ID does not exist"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to delete this woreda"
+            },
+            404: {
+                "description": "Not Found - Woreda with the specified ID does not exist"
+            },
         },
     )
     def destroy(self, request, *args, **kwargs):
@@ -226,8 +241,12 @@ class WoredaViewset(viewsets.ModelViewSet):
         ],
         responses={
             200: WoredaSerializer(many=True),
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to view woredas"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to view woredas"
+            },
         },
         examples=[
             OpenApiExample(
@@ -239,14 +258,11 @@ class WoredaViewset(viewsets.ModelViewSet):
                         "zone": {
                             "id": 1,
                             "name": "Bole",
-                            "region": {
-                                "id": 1,
-                                "name": "Addis Ababa"
-                            }
+                            "region": {"id": 1, "name": "Addis Ababa"},
                         },
                         "created_at": "2024-01-15T10:30:00Z",
                         "updated_at": "2024-01-15T10:30:00Z",
-                        "created_by": 1
+                        "created_by": 1,
                     },
                     {
                         "id": 2,
@@ -254,15 +270,12 @@ class WoredaViewset(viewsets.ModelViewSet):
                         "zone": {
                             "id": 1,
                             "name": "Bole",
-                            "region": {
-                                "id": 1,
-                                "name": "Addis Ababa"
-                            }
+                            "region": {"id": 1, "name": "Addis Ababa"},
                         },
                         "created_at": "2024-01-15T11:00:00Z",
                         "updated_at": "2024-01-15T11:00:00Z",
-                        "created_by": 1
-                    }
+                        "created_by": 1,
+                    },
                 ],
                 response_only=True,
             ),
@@ -278,8 +291,12 @@ class WoredaViewset(viewsets.ModelViewSet):
 
         if self.action == "get_by_ZoneSubcity":
             self.action = "list"
+
+        if self.action in ["list", "retrieve"]:
+            self.permission_required = None
+            return [permission() for permission in self.permission_classes]
+
         return has_custom_permission(self, "woreda")
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
-

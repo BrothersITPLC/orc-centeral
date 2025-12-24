@@ -1,4 +1,4 @@
-from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
+from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -13,7 +13,7 @@ from ..models import ZoneOrSubcity
 class ZoneorSubcityViewset(viewsets.ModelViewSet):
     """
     A viewset for managing zones or sub-cities.
-    
+
     Provides CRUD operations for ZoneOrSubcity entities and custom filtering by region.
     """
 
@@ -28,8 +28,12 @@ class ZoneorSubcityViewset(viewsets.ModelViewSet):
         tags=["Address - Zone/Subcity"],
         responses={
             200: ZoneOrSubcitySerializer(many=True),
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to view zones/subcities"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to view zones/subcities"
+            },
         },
         examples=[
             OpenApiExample(
@@ -39,13 +43,10 @@ class ZoneorSubcityViewset(viewsets.ModelViewSet):
                         "id": 1,
                         "name": "Bole",
                         "region_id": 1,
-                        "region": {
-                            "id": 1,
-                            "name": "Addis Ababa"
-                        },
+                        "region": {"id": 1, "name": "Addis Ababa"},
                         "created_at": "2024-01-15T10:30:00Z",
                         "updated_at": "2024-01-15T10:30:00Z",
-                        "created_by": 1
+                        "created_by": 1,
                     }
                 ],
                 response_only=True,
@@ -62,17 +63,20 @@ class ZoneorSubcityViewset(viewsets.ModelViewSet):
         request=ZoneOrSubcitySerializer,
         responses={
             201: ZoneOrSubcitySerializer,
-            400: {"description": "Bad Request - Invalid data provided or missing region_id"},
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to create zones/subcities"},
+            400: {
+                "description": "Bad Request - Invalid data provided or missing region_id"
+            },
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to create zones/subcities"
+            },
         },
         examples=[
             OpenApiExample(
                 "Create Zone Request",
-                value={
-                    "name": "Bole",
-                    "region_id": 1
-                },
+                value={"name": "Bole", "region_id": 1},
                 request_only=True,
             ),
             OpenApiExample(
@@ -80,13 +84,10 @@ class ZoneorSubcityViewset(viewsets.ModelViewSet):
                 value={
                     "id": 1,
                     "name": "Bole",
-                    "region": {
-                        "id": 1,
-                        "name": "Addis Ababa"
-                    },
+                    "region": {"id": 1, "name": "Addis Ababa"},
                     "created_at": "2024-01-15T10:30:00Z",
                     "updated_at": "2024-01-15T10:30:00Z",
-                    "created_by": 1
+                    "created_by": 1,
                 },
                 response_only=True,
                 status_codes=["201"],
@@ -102,9 +103,15 @@ class ZoneorSubcityViewset(viewsets.ModelViewSet):
         tags=["Address - Zone/Subcity"],
         responses={
             200: ZoneOrSubcitySerializer,
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to view this zone/subcity"},
-            404: {"description": "Not Found - Zone/Subcity with the specified ID does not exist"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to view this zone/subcity"
+            },
+            404: {
+                "description": "Not Found - Zone/Subcity with the specified ID does not exist"
+            },
         },
         examples=[
             OpenApiExample(
@@ -112,13 +119,10 @@ class ZoneorSubcityViewset(viewsets.ModelViewSet):
                 value={
                     "id": 1,
                     "name": "Bole",
-                    "region": {
-                        "id": 1,
-                        "name": "Addis Ababa"
-                    },
+                    "region": {"id": 1, "name": "Addis Ababa"},
                     "created_at": "2024-01-15T10:30:00Z",
                     "updated_at": "2024-01-15T10:30:00Z",
-                    "created_by": 1
+                    "created_by": 1,
                 },
                 response_only=True,
             ),
@@ -135,17 +139,20 @@ class ZoneorSubcityViewset(viewsets.ModelViewSet):
         responses={
             200: ZoneOrSubcitySerializer,
             400: {"description": "Bad Request - Invalid data provided"},
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to update this zone/subcity"},
-            404: {"description": "Not Found - Zone/Subcity with the specified ID does not exist"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to update this zone/subcity"
+            },
+            404: {
+                "description": "Not Found - Zone/Subcity with the specified ID does not exist"
+            },
         },
         examples=[
             OpenApiExample(
                 "Update Request",
-                value={
-                    "name": "Bole Subcity",
-                    "region_id": 1
-                },
+                value={"name": "Bole Subcity", "region_id": 1},
                 request_only=True,
             ),
         ],
@@ -161,23 +168,25 @@ class ZoneorSubcityViewset(viewsets.ModelViewSet):
         responses={
             200: ZoneOrSubcitySerializer,
             400: {"description": "Bad Request - Invalid data provided"},
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to update this zone/subcity"},
-            404: {"description": "Not Found - Zone/Subcity with the specified ID does not exist"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to update this zone/subcity"
+            },
+            404: {
+                "description": "Not Found - Zone/Subcity with the specified ID does not exist"
+            },
         },
         examples=[
             OpenApiExample(
                 "Partial Update Request - Name Only",
-                value={
-                    "name": "Bole"
-                },
+                value={"name": "Bole"},
                 request_only=True,
             ),
             OpenApiExample(
                 "Partial Update Request - Region Only",
-                value={
-                    "region_id": 2
-                },
+                value={"region_id": 2},
                 request_only=True,
             ),
         ],
@@ -191,9 +200,15 @@ class ZoneorSubcityViewset(viewsets.ModelViewSet):
         tags=["Address - Zone/Subcity"],
         responses={
             204: {"description": "No Content - Zone/Subcity successfully deleted"},
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to delete this zone/subcity"},
-            404: {"description": "Not Found - Zone/Subcity with the specified ID does not exist"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to delete this zone/subcity"
+            },
+            404: {
+                "description": "Not Found - Zone/Subcity with the specified ID does not exist"
+            },
         },
     )
     def destroy(self, request, *args, **kwargs):
@@ -214,8 +229,12 @@ class ZoneorSubcityViewset(viewsets.ModelViewSet):
         ],
         responses={
             200: ZoneOrSubcitySerializer(many=True),
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to view zones/subcities"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to view zones/subcities"
+            },
         },
         examples=[
             OpenApiExample(
@@ -224,25 +243,19 @@ class ZoneorSubcityViewset(viewsets.ModelViewSet):
                     {
                         "id": 1,
                         "name": "Bole",
-                        "region": {
-                            "id": 1,
-                            "name": "Addis Ababa"
-                        },
+                        "region": {"id": 1, "name": "Addis Ababa"},
                         "created_at": "2024-01-15T10:30:00Z",
                         "updated_at": "2024-01-15T10:30:00Z",
-                        "created_by": 1
+                        "created_by": 1,
                     },
                     {
                         "id": 2,
                         "name": "Kirkos",
-                        "region": {
-                            "id": 1,
-                            "name": "Addis Ababa"
-                        },
+                        "region": {"id": 1, "name": "Addis Ababa"},
                         "created_at": "2024-01-15T11:00:00Z",
                         "updated_at": "2024-01-15T11:00:00Z",
-                        "created_by": 1
-                    }
+                        "created_by": 1,
+                    },
                 ],
                 response_only=True,
             ),
@@ -259,8 +272,12 @@ class ZoneorSubcityViewset(viewsets.ModelViewSet):
 
         if self.action == "get_by_region":
             self.action = "list"
+
+        if self.action in ["list", "retrieve"]:
+            self.permission_required = None
+            return [permission() for permission in self.permission_classes]
+
         return has_custom_permission(self, "zoneorsubcity")
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
-

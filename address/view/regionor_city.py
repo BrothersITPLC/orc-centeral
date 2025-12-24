@@ -1,4 +1,4 @@
-from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status, viewsets
 
 from address.serializers import RegionOrCitySerializer
@@ -11,11 +11,12 @@ from ..models import RegionOrCity
 class RegionorCityViewset(viewsets.ModelViewSet):
     """
     A viewset for managing regions or cities.
-    
+
     Provides CRUD operations for RegionOrCity entities.
     """
 
     queryset = RegionOrCity.objects.all()
+
     serializer_class = RegionOrCitySerializer
     permission_classes = [GroupPermission]
     permission_required = "view_regionorcity"
@@ -26,8 +27,12 @@ class RegionorCityViewset(viewsets.ModelViewSet):
         tags=["Address - Region/City"],
         responses={
             200: RegionOrCitySerializer(many=True),
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to view regions/cities"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to view regions/cities"
+            },
         },
         examples=[
             OpenApiExample(
@@ -38,15 +43,15 @@ class RegionorCityViewset(viewsets.ModelViewSet):
                         "name": "Addis Ababa",
                         "created_at": "2024-01-15T10:30:00Z",
                         "updated_at": "2024-01-15T10:30:00Z",
-                        "created_by": 1
+                        "created_by": 1,
                     },
                     {
                         "id": 2,
                         "name": "Oromia",
                         "created_at": "2024-01-15T11:00:00Z",
                         "updated_at": "2024-01-15T11:00:00Z",
-                        "created_by": 1
-                    }
+                        "created_by": 1,
+                    },
                 ],
                 response_only=True,
             ),
@@ -63,15 +68,17 @@ class RegionorCityViewset(viewsets.ModelViewSet):
         responses={
             201: RegionOrCitySerializer,
             400: {"description": "Bad Request - Invalid data provided"},
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to create regions/cities"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to create regions/cities"
+            },
         },
         examples=[
             OpenApiExample(
                 "Create Region Request",
-                value={
-                    "name": "Addis Ababa"
-                },
+                value={"name": "Addis Ababa"},
                 request_only=True,
             ),
             OpenApiExample(
@@ -81,7 +88,7 @@ class RegionorCityViewset(viewsets.ModelViewSet):
                     "name": "Addis Ababa",
                     "created_at": "2024-01-15T10:30:00Z",
                     "updated_at": "2024-01-15T10:30:00Z",
-                    "created_by": 1
+                    "created_by": 1,
                 },
                 response_only=True,
                 status_codes=["201"],
@@ -97,9 +104,15 @@ class RegionorCityViewset(viewsets.ModelViewSet):
         tags=["Address - Region/City"],
         responses={
             200: RegionOrCitySerializer,
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to view this region/city"},
-            404: {"description": "Not Found - Region/City with the specified ID does not exist"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to view this region/city"
+            },
+            404: {
+                "description": "Not Found - Region/City with the specified ID does not exist"
+            },
         },
         examples=[
             OpenApiExample(
@@ -109,7 +122,7 @@ class RegionorCityViewset(viewsets.ModelViewSet):
                     "name": "Addis Ababa",
                     "created_at": "2024-01-15T10:30:00Z",
                     "updated_at": "2024-01-15T10:30:00Z",
-                    "created_by": 1
+                    "created_by": 1,
                 },
                 response_only=True,
             ),
@@ -126,16 +139,20 @@ class RegionorCityViewset(viewsets.ModelViewSet):
         responses={
             200: RegionOrCitySerializer,
             400: {"description": "Bad Request - Invalid data provided"},
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to update this region/city"},
-            404: {"description": "Not Found - Region/City with the specified ID does not exist"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to update this region/city"
+            },
+            404: {
+                "description": "Not Found - Region/City with the specified ID does not exist"
+            },
         },
         examples=[
             OpenApiExample(
                 "Update Request",
-                value={
-                    "name": "Addis Ababa City"
-                },
+                value={"name": "Addis Ababa City"},
                 request_only=True,
             ),
         ],
@@ -151,16 +168,20 @@ class RegionorCityViewset(viewsets.ModelViewSet):
         responses={
             200: RegionOrCitySerializer,
             400: {"description": "Bad Request - Invalid data provided"},
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to update this region/city"},
-            404: {"description": "Not Found - Region/City with the specified ID does not exist"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to update this region/city"
+            },
+            404: {
+                "description": "Not Found - Region/City with the specified ID does not exist"
+            },
         },
         examples=[
             OpenApiExample(
                 "Partial Update Request",
-                value={
-                    "name": "Addis Ababa"
-                },
+                value={"name": "Addis Ababa"},
                 request_only=True,
             ),
         ],
@@ -174,17 +195,26 @@ class RegionorCityViewset(viewsets.ModelViewSet):
         tags=["Address - Region/City"],
         responses={
             204: {"description": "No Content - Region/City successfully deleted"},
-            401: {"description": "Unauthorized - Authentication credentials were not provided or are invalid"},
-            403: {"description": "Forbidden - You do not have permission to delete this region/city"},
-            404: {"description": "Not Found - Region/City with the specified ID does not exist"},
+            401: {
+                "description": "Unauthorized - Authentication credentials were not provided or are invalid"
+            },
+            403: {
+                "description": "Forbidden - You do not have permission to delete this region/city"
+            },
+            404: {
+                "description": "Not Found - Region/City with the specified ID does not exist"
+            },
         },
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
     def get_permissions(self):
+        if self.action in ["list", "retrieve"]:
+            self.permission_required = None
+            return [permission() for permission in self.permission_classes]
+
         return has_custom_permission(self, "regionorcity")
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
-
