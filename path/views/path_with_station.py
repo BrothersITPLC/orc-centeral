@@ -4,7 +4,6 @@ from rest_framework.permissions import AllowAny
 
 from helper.custom_pagination import CustomLimitOffsetPagination
 from path.serializers import PathSerializer
-from 
 from ..models import Path
 
 

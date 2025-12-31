@@ -112,6 +112,7 @@ MIDDLEWARE = [
     "common.middleware.DisableCSRFForAPIMiddleware",  
     # "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "common.middleware.AccessTokenBlacklistMiddleware",  # Check for blacklisted tokens
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "common.middleware.AttachJWTTokenMiddleware",
@@ -129,28 +130,30 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(
-        minutes=int(os.environ.get("JWT_ACCESS_TOKEN_LIFETIME", "15"))
+        minutes=int(os.environ.get("JWT_ACCESS_TOKEN_LIFETIME_MINUTES", "5"))
     ),
     "REFRESH_TOKEN_LIFETIME": timedelta(
-        days=int(os.environ.get("JWT_REFRESH_TOKEN_LIFETIME", "7"))
+        minutes=int(os.environ.get("JWT_REFRESH_TOKEN_LIFETIME_MINUTES", "15"))
     ),
     "SIGNING_KEY": SECRET_KEY,
     "VERIFYING_KEY": os.environ.get("JWT_VERIFYING_KEY", SECRET_KEY),
     "AUTH_HEADER_TYPES": ("Bearer",),
-    "ROTATE_REFRESH_TOKENS": True,  # Generate new refresh token on each refresh
-    "BLACKLIST_AFTER_ROTATION": True,  # Blacklist old refresh token after rotation
+    "ROTATE_REFRESH_TOKENS": True, 
+    "BLACKLIST_AFTER_ROTATION": True, 
     "UPDATE_LAST_LOGIN": True,
 }
 
 # Token Configuration - Centralized settings for consistency
 # These values are used across views, middleware, and utilities
+# All durations now in MINUTES for consistency
 TOKEN_CONFIG = {
-    "ACCESS_TOKEN_LIFETIME_MINUTES": int(os.environ.get("JWT_ACCESS_TOKEN_LIFETIME", "15")),
-    "REFRESH_TOKEN_LIFETIME_DAYS": int(os.environ.get("JWT_REFRESH_TOKEN_LIFETIME", "7")),
-    "SESSION_TOKEN_LIFETIME_DAYS": int(os.environ.get("SESSION_TOKEN_LIFETIME", "7")),
-    "COOKIE_EXPIRATION_DAYS": int(os.environ.get("COOKIE_EXPIRATION_DAYS", "7")),
+    "ACCESS_TOKEN_LIFETIME_MINUTES": int(os.environ.get("JWT_ACCESS_TOKEN_LIFETIME_MINUTES", "5")),
+    "REFRESH_TOKEN_LIFETIME_MINUTES": int(os.environ.get("JWT_REFRESH_TOKEN_LIFETIME_MINUTES", "15")),
+    "SESSION_TOKEN_LIFETIME_MINUTES": int(os.environ.get("SESSION_TOKEN_LIFETIME_MINUTES", "15")),
+    "COOKIE_MAX_AGE_SECONDS": int(os.environ.get("COOKIE_MAX_AGE_SECONDS", str(15 * 60))), 
 }
 
 
@@ -162,6 +165,8 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 CORS_ALLOW_CREDENTIALS = os.environ.get("CORS_ALLOW_CREDENTIALS") == "True"
 CORS_ALLOW_HEADERS = os.environ.get("CORS_ALLOW_HEADERS", "").split(",")
 CORS_ALLOW_METHODS = os.environ.get("CORS_ALLOW_METHODS", "").split(",")
+# Expose custom headers to frontend JavaScript (required for encrypted response decryption)
+CORS_EXPOSE_HEADERS = ["X-Content-Security-Key"]
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
 ALLOWED_HOSTS.append("localhost")
 ALLOWED_HOSTS.append("127.0.0.1")
