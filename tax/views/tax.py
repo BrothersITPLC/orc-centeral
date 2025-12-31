@@ -21,7 +21,7 @@ class TaxViewSet(viewsets.ModelViewSet):
     queryset = Tax.objects.all()
     serializer_class = TaxSerializer
     permission_classes = [IsAuthenticated, GroupPermission]
-    perermission_required = "view_tax"
+    # perermission_required = "view_tax"
     pagination_class = CustomLimitOffsetPagination
 
     @extend_schema(
@@ -281,7 +281,7 @@ class TaxViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:
             self.permission_required = None
-            return [permission() for permission in self.permission_classes]
+            return []
 
         return has_custom_permission(self, "tax")
 
